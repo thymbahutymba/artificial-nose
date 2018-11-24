@@ -19,8 +19,7 @@ struct Point
 
 struct ValueQueue
 {
-    int top;
-    int last;
+    int top, first;
     struct Point elem[GRAPH_ELEMENT];
 };
 
@@ -84,18 +83,15 @@ void *simulate_sensor_task()
     
     while (1)
     {
-        printf("%i %i", graph.last, graph.top);
-
         pthread_mutex_lock(&mutex);
-
         clock_gettime(CLOCK_MONOTONIC, &graph.elem[graph.top].t);
         graph.elem[graph.top].v = rand() % (UPPER_LIMIT + 1);
 
         graph.top++;
         graph.top %= GRAPH_ELEMENT;
-        if (graph.top == graph.last){
-            graph.last++;
-            graph.last %= GRAPH_ELEMENT;
+        if (graph.top == graph.first){
+            graph.first++;
+            graph.first %= GRAPH_ELEMENT;
         }
         pthread_mutex_unlock(&mutex);
 
@@ -108,10 +104,8 @@ int main()
 {
     pthread_attr_t attr;
     pthread_t sensor_id;
-    graph.top = graph.last = 0;
     unsigned int index;
-    char *s;
-
+     
     struct timespec t;
     int period = 50;
 
@@ -125,19 +119,15 @@ int main()
 
     pthread_attr_init(&attr);
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
-    pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
+    pthread_attr_setschedpolicy(&attr, SCHED_RR);
 
-    pthread_create(&sensor_id, &attr, simulate_sensor_task, NULL);
+    printf("%i", pthread_create(&sensor_id, &attr, simulate_sensor_task, NULL)==EINVAL);
 
     do
     {
-
         pthread_mutex_lock(&mutex);
-        if (graph.top != graph.last)
-            for(index = graph.last; index < graph.top; index = index++ % GRAPH_ELEMENT){
-                sprintf(s, "%li", graph.elem[index].t.tv_sec);
-                textout_ex(screen, font, s, RESULT_X1+INTERNAL_MARGIN, RESULT_Y1+INTERNAL_MARGIN, TEXT_COLOR, 0);
-            }
+        if (graph.top != graph.first)
+            for(index = graph.first; index < graph.top; index = index++ % GRAPH_ELEMENT){};
 
         pthread_mutex_unlock(&mutex);
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);

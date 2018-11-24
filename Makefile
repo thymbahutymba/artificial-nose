@@ -1,5 +1,5 @@
 CC = gcc
-LDFLAGS = -lpthread
+LDFLAGS = -pthread -lrt
 CFLAGS = -Wall -Wextra `allegro-config --libs`
 
 .PHONY: all
