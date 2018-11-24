@@ -4,7 +4,7 @@ CFLAGS = -Wall -Wextra `allegro-config --libs`
 
 .PHONY: all
 all:
-	$(CC) $(LDFLAGS) -o graphics graphics.c $(CFLAGS) 
+	$(CC) $(LDFLAGS) -o graphics graphics.c $(CFLAGS)
 
 .PHONY: clean
 clean:
@@ -13,4 +13,4 @@ clean:
 .PHONY: docker
 docker:
 	docker build --rm -f "Dockerfile" -t artificial-nose:latest .
-	docker run -ti --rm -e DISPLAY="192.168.1.197:0.0" artificial-nose ./graphics
+	docker run -ti --rm -e DISPLAY="10.10.10.10:0.0" artificial-nose ./graphics

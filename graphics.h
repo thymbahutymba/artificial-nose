@@ -8,6 +8,7 @@
 #define BORDER_COLOR	14  // yellow color for border section
 #define TITLE_COLOR     12  // light red for title
 #define TEXT_COLOR      15  // white for text color
+#define BKG_COLOR       0
 
 #define IMAGE_WIDTH		460
 #define IMAGE_HEIGHT	460
@@ -39,6 +40,8 @@
 #define LTEXT_X         LEGEND_X1+INTERNAL_MARGIN
 #define LTEXT_Y         LEGEND_Y1+INTERNAL_MARGIN
 #define LINE_SPACE      12  // space between each line of text
+
+#define GRAPH_ELEMENT   GRAPH_WIDTH
 
 void init_interface();
 void draw_background();
