@@ -4,7 +4,7 @@ CFLAGS = -Wall -Wextra `allegro-config --libs`
 
 .PHONY: all
 all:
-	$(CC) $(CFLAGS) $(LDFLAGS) -o graphics graphics.c
+	$(CC) -o graphics graphics.c $(CFLAGS) $(LDFLAGS) 
 
 .PHONY: clean
 clean:
