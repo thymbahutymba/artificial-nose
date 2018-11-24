@@ -9,9 +9,15 @@ void init_interface()
     install_keyboard();
 }
 
+void print_legend(struct BITMAP *screen, int num_element, char *text[]){
+    int i;
+
+    for (i = 0; i < num_element; i++)
+        textout_ex(screen, font, text[i], LTEXT_X, LTEXT_Y + LINE_SPACE * (i + 1), TEXT_COLOR, 0);
+}
+
 void draw_background()
 {
-    int i;
     char *legend_text[] = {
         "ESC: Exit from simulation",
         "ENTER: tbd if necessary",
@@ -31,8 +37,8 @@ void draw_background()
     rect(screen, LEGEND_X1, LEGEND_Y1, LEGEND_X2, LEGEND_Y2, BORDER_COLOR);
     textout_ex(screen, font, "LEGEND", LTEXT_X, LTEXT_Y, TITLE_COLOR, 0);
 
-    for (i = 0; i < legend_element; i++)
-        textout_ex(screen, font, legend_text[i], LTEXT_X, LTEXT_Y + LINE_SPACE * (i + 1), TEXT_COLOR, 0);
+    print_legend(screen, legend_element, legend_text);
+
 }
 
 int main()
