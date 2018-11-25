@@ -8,7 +8,7 @@
 #include "graphics.h"
 
 #define BOTTOM_LIMIT 0
-#define UPPER_LIMIT 255
+#define UPPER_LIMIT 200
 
 //TODO: move to graphic.h
 struct Point
@@ -54,6 +54,7 @@ void draw_background()
 
     // draw section for graph location
     rect(screen, GRAPH_X1, GRAPH_Y1, GRAPH_X2, GRAPH_Y2, BORDER_COLOR);
+    line(screen, GRAPH_X1, GRAPH_Y2 + 100, GRAPH_X2, GRAPH_Y2 + 100, BORDER_COLOR);
 
     // draw section for image location
     rect(screen, IMAGE_X1, IMAGE_Y1, IMAGE_X2, IMAGE_Y2, BORDER_COLOR);
@@ -75,9 +76,10 @@ void draw_graphic() {
     int i;
 
     pthread_mutex_lock(&mutex);
-    for(i = graph.first; i != (graph.top + GRAPH_ELEMENT - 2) % GRAPH_ELEMENT; i++) {
-        line(screen, pos_graph, GRAPH_Y1 - graph.elem[i].v, (pos_graph +1) % GRAPH_ELEMENT, GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, BORDER_COLOR);
-        pos_graph = (pos_graph + 1) % GRAPH_ELEMENT;
+    for(i = graph.first; i != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT; i) {
+        line(screen, pos_graph, GRAPH_Y1 - graph.elem[i].v, (pos_graph +1), GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, BORDER_COLOR);
+        pos_graph = ((pos_graph + 1) == GRAPH_ELEMENT + EXTERNAL_MARGIN) ? 0 : (pos_graph +1);
+        i++;
         i %= GRAPH_ELEMENT;
     }
     pthread_mutex_unlock(&mutex);
