@@ -69,6 +69,16 @@ void draw_background()
         textout_ex(screen, font, legend_text[i], LTEXT_X, LTEXT_Y + LINE_SPACE * (i + 1), TEXT_COLOR, 0);
 }
 
+void draw_graphic() {
+    unsigned int i;
+    int pos_graph = GRAPH_X1 + 2;
+
+    for(i = graph.first; i != (graph.top + GRAPH_ELEMENT - 2) % GRAPH_ELEMENT; i = i++ % GRAPH_ELEMENT) {
+        line(screen, pos_graph, GRAPH_Y1 - graph.elem[i].v, (pos_graph +1) % GRAPH_ELEMENT, GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, BORDER_COLOR);
+        pos_graph = (pos_graph + 1);
+    }
+}
+
 void time_add_ms(struct timespec *t, int ms)
 {
     t->tv_sec += ms / 1000;
@@ -121,6 +131,11 @@ void *graphic_task()
     while (1)
     {
         draw_background();
+        
+        pthread_mutex_lock(&mutex);
+        draw_graphic();
+        pthread_mutex_unlock(&mutex);
+
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
         time_add_ms(&t, period);
     }
