@@ -5,6 +5,7 @@
 #include <semaphore.h>
 #include <sched.h>
 #include <time.h>
+#include <string.h>
 #include "graphics.h"
 
 #define BOTTOM_LIMIT 0
@@ -74,15 +75,22 @@ int pos_graph = GRAPH_X1 + 2;
 
 void draw_graphic() {
     int i;
+    char *val = malloc(6);
+    const char* str;
 
     pthread_mutex_lock(&mutex);
     for(i = graph.first; i != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT; i) {
         line(screen, pos_graph, GRAPH_Y1 - graph.elem[i].v, (pos_graph +1), GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, BORDER_COLOR);
         pos_graph = ((pos_graph + 1) == GRAPH_ELEMENT + EXTERNAL_MARGIN) ? 0 : (pos_graph +1);
+        sprintf(val, "%u", graph.elem[i].v);
         i++;
         i %= GRAPH_ELEMENT;
+        char cur_val[] = "Current value: ";
+        strcat(cur_val, val);
+        textout_ex(screen, font, cur_val, GRAPH_X1 + 10, GRAPH_Y2 + 20, TEXT_COLOR, 0);
     }
     pthread_mutex_unlock(&mutex);
+    free(val);
 }
 
 void time_add_ms(struct timespec *t, int ms)
