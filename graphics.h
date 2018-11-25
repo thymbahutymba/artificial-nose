@@ -41,7 +41,7 @@
 #define LTEXT_Y         LEGEND_Y1+INTERNAL_MARGIN
 #define LINE_SPACE      12  // space between each line of text
 
-#define GRAPH_ELEMENT   GRAPH_WIDTH
+#define GRAPH_ELEMENT   GRAPH_WIDTH - 4
 
 void init_interface();
 void draw_background();
