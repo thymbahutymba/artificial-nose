@@ -26,6 +26,13 @@ struct ValueQueue
 struct ValueQueue graph;
 pthread_mutex_t mutex;
 
+struct Task
+{
+    pthread_t id;
+    void *f;
+    int priority;
+};
+
 void init_interface()
 {
     allegro_init();
@@ -80,7 +87,7 @@ void *simulate_sensor_task()
 
     clock_gettime(CLOCK_MONOTONIC, &t);
     time_add_ms(&t, period);
-    
+
     while (1)
     {
         pthread_mutex_lock(&mutex);
@@ -89,7 +96,8 @@ void *simulate_sensor_task()
 
         graph.top++;
         graph.top %= GRAPH_ELEMENT;
-        if (graph.top == graph.first){
+        if (graph.top == graph.first)
+        {
             graph.first++;
             graph.first %= GRAPH_ELEMENT;
         }
@@ -100,45 +108,61 @@ void *simulate_sensor_task()
     }
 }
 
-int main()
+void *graphic_task()
 {
-    pthread_attr_t attr;
-    struct sched_param param;
-    pthread_t sensor_id;
-    unsigned int index;
     struct timespec t;
-    int period = 50;
+    int period = 25;
 
     clock_gettime(CLOCK_MONOTONIC, &t);
     time_add_ms(&t, period);
 
-    pthread_mutex_init(&mutex, NULL);
-
     init_interface();
-    draw_background();
+
+    while (1)
+    {
+        draw_background();
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
+        time_add_ms(&t, period);
+    }
+
+    allegro_exit();
+}
+
+int task_create(struct Task *t)
+{
+    pthread_attr_t attr;
+    struct sched_param param;
 
     pthread_attr_init(&attr);
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
     pthread_attr_setschedpolicy(&attr, SCHED_RR);
 
-    param.sched_priority=25;
+    param.sched_priority = (*t).priority;
     pthread_attr_setschedparam(&attr, &param);
 
-    pthread_create(&sensor_id, &attr, simulate_sensor_task, NULL);
+    return pthread_create(&(*t).id, &attr, (*t).f, NULL);
+}
+
+int main()
+{
+    int index;
+    struct Task task_table[] = {
+        {-1, simulate_sensor_task, 25},
+        {-1, graphic_task, 20},
+    };
+    const int n_task = sizeof(task_table) / sizeof(struct Task);
+
+    pthread_mutex_init(&mutex, NULL);
+
+    for (index = 0; index < n_task; index++)
+        task_create(&task_table[index]);
 
     do
     {
-        pthread_mutex_lock(&mutex);
-        if (graph.top != graph.first)
-            for(index = graph.first; index < graph.top; index = index++ % GRAPH_ELEMENT){};
-
-        pthread_mutex_unlock(&mutex);
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
-        time_add_ms(&t, period);
-    
     } while (!key[KEY_ESC]);
 
-    allegro_exit();
+    for (index = 0; index < n_task; index++)
+        pthread_cancel(task_table[index].id);
 
     return 0;
 }
