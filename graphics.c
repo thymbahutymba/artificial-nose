@@ -27,6 +27,9 @@ struct ValueQueue
 struct ValueQueue graph;
 pthread_mutex_t mutex;
 
+int cursor;
+pthread_mutex_t mutex_cursor;
+
 struct Task
 {
     pthread_t id;
@@ -73,15 +76,17 @@ void draw_background()
 
 int pos_graph = GRAPH_X1 + 2;
 
-void draw_graphic() {
+void draw_graphic()
+{
     int i;
     char *val = malloc(6);
-    const char* str;
+    const char *str;
 
     pthread_mutex_lock(&mutex);
-    for(i = graph.first; i != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT; i) {
-        line(screen, pos_graph, GRAPH_Y1 - graph.elem[i].v, (pos_graph +1), GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, BORDER_COLOR);
-        pos_graph = ((pos_graph + 1) == GRAPH_ELEMENT + EXTERNAL_MARGIN) ? 0 : (pos_graph +1);
+    for (i = graph.first; i != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT; i)
+    {
+        line(screen, pos_graph, GRAPH_Y1 - graph.elem[i].v, (pos_graph + 1), GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, BORDER_COLOR);
+        pos_graph = ((pos_graph + 1) == GRAPH_ELEMENT + EXTERNAL_MARGIN) ? 0 : (pos_graph + 1);
         sprintf(val, "%u", graph.elem[i].v);
         i++;
         i %= GRAPH_ELEMENT;
@@ -145,13 +150,52 @@ void *graphic_task()
     while (1)
     {
         draw_background();
-        draw_graphic();
+        //draw_graphic();
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
         time_add_ms(&t, period);
     }
 
     allegro_exit();
+}
+
+void get_keycodes(char *scan)
+{
+    int k = readkey();
+    *scan = k >> 8;
+}
+
+void *keyboard_task()
+{
+    struct timespec t;
+    int period = 25;
+    char scan;
+
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    time_add_ms(&t, period);
+
+    while (1)
+    {
+        get_keycodes(&scan);
+        switch (scan)
+        {
+        case KEY_LEFT:
+            pthread_mutex_lock(&mutex_cursor);
+            cursor = (cursor - 1) % GRAPH_ELEMENT;
+            pthread_mutex_unlock(&mutex_cursor);
+            break;
+        case KEY_RIGHT:
+            pthread_mutex_lock(&mutex_cursor);
+            cursor = (cursor + 1) % GRAPH_ELEMENT;
+            pthread_mutex_unlock(&mutex_cursor);
+            break;
+        default:
+            break;
+        }
+
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
+        time_add_ms(&t, period);
+    }
 }
 
 int task_create(struct Task *t)
@@ -175,10 +219,12 @@ int main()
     struct Task task_table[] = {
         {-1, simulate_sensor_task, 25},
         {-1, graphic_task, 20},
+        {-1, keyboard_task, 20},
     };
     const int n_task = sizeof(task_table) / sizeof(struct Task);
 
     pthread_mutex_init(&mutex, NULL);
+    pthread_mutex_init(&mutex_cursor, NULL);
 
     for (index = 0; index < n_task; index++)
         task_create(&task_table[index]);
