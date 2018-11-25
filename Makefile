@@ -1,6 +1,7 @@
 CC = gcc
 LDFLAGS = -pthread -lrt
 CFLAGS = -Wall -Wextra `allegro-config --libs`
+DOCKERFLAGS = -ti --rm --privileged -e DISPLAY="10.10.10.10:0.0"
 
 .PHONY: all
 all:
@@ -13,4 +14,4 @@ clean:
 .PHONY: docker
 docker:
 	docker build --rm -f "Dockerfile" -t artificial-nose:latest .
-	docker run -ti --rm -e DISPLAY="10.10.10.10:0.0" artificial-nose ./graphics
+	docker run $(DOCKERFLAGS) artificial-nose
