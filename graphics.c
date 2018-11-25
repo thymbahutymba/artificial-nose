@@ -19,7 +19,7 @@ struct Point
 
 struct ValueQueue
 {
-    int top, first;
+    unsigned int top, first;
     struct Point elem[GRAPH_ELEMENT];
 };
 
@@ -103,9 +103,9 @@ void *simulate_sensor_task()
 int main()
 {
     pthread_attr_t attr;
+    struct sched_param param;
     pthread_t sensor_id;
     unsigned int index;
-     
     struct timespec t;
     int period = 50;
 
@@ -121,7 +121,10 @@ int main()
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
     pthread_attr_setschedpolicy(&attr, SCHED_RR);
 
-    printf("%i", pthread_create(&sensor_id, &attr, simulate_sensor_task, NULL)==EINVAL);
+    param.sched_priority=25;
+    pthread_attr_setschedparam(&attr, &param);
+
+    pthread_create(&sensor_id, &attr, simulate_sensor_task, NULL);
 
     do
     {
@@ -136,5 +139,6 @@ int main()
     } while (!key[KEY_ESC]);
 
     allegro_exit();
+
     return 0;
 }
