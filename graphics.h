@@ -47,7 +47,9 @@
 #define LTEXT_Y         (LEGEND_Y1 + INTERNAL_MARGIN)
 #define LINE_SPACE      12  // space between each line of text
 
-#define GRAPH_ELEMENT   200
+#define GRAPH_ELEMENT   55
+#define CURSOR_SIZE     (12)
+#define CURSOR_COLOR    (10)
 
 void init_interface();
 void draw_background();

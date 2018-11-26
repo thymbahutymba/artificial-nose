@@ -5,7 +5,6 @@
 #include <semaphore.h>
 #include <sched.h>
 #include <time.h>
-#include <string.h>
 #include "graphics.h"
 
 #define BOTTOM_LIMIT 100
@@ -18,17 +17,18 @@ struct Point
     unsigned int v;    // value readed by sensor at time t
 };
 
-struct ValueQueue
+struct Queue
 {
     unsigned int top, first;
     struct Point elem[GRAPH_ELEMENT];
+    int x_point[GRAPH_ELEMENT];             // CHANGE NAME WITH A MORE USEFUL WORD
 };
 
-struct ValueQueue graph;
-pthread_mutex_t mutex;
+struct Queue graph;
+pthread_mutex_t mutex_graph;
 
-int cursor;
-pthread_mutex_t mutex_cursor;
+unsigned int c_cursor, p_cursor;       //current and previous position of cursor
+//pthread_mutex_t mutex_cursor;
 
 struct Task
 {
@@ -75,35 +75,66 @@ void draw_background()
         textout_ex(screen, font, legend_text[i], LTEXT_X, LTEXT_Y + LINE_SPACE * (i + 1), TEXT_COLOR, 0);
 }
 
-//void do_circlefill(BITMAP *bmp, int x, int y, int d){
-//    circlefill(bmp, x, y, (int) (d/4), TEXT_COLOR);
-//}
-
 void draw_graphic()
 {
     int i, j;
     const int d = (int)(GRAPH_WIDTH / GRAPH_ELEMENT);
-    int point[8];
+    int points[8];
+    int x1, x2, y1, y2, x0, y0, x3, y3;
+    int dist;
+    fixed p1tan, p2tan;
 
-    pthread_mutex_lock(&mutex);
-    for (i = graph.first; i != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT; i = ++i % GRAPH_ELEMENT)
+    pthread_mutex_lock(&mutex_graph);
+    for (i = graph.first, j = 0; i != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT; i = ++i % GRAPH_ELEMENT, ++j)
     {
-        /*for(j = 0; j < 8; j++){
-            if(!j%2)
-                point[j] = GRAPH_X1 + ((i + j / 2 - graph.first) % GRAPH_ELEMENT) * d;
-            else
-                point[j] = GRAPH_Y1 - graph.elem[(i + j / 2) % GRAPH_ELEMENT].v;
-        }
-        spline(screen, point, TEXT_COLOR);
-        */
-        //_putpixel(screen, GRAPH_X1 + (i - graph.first) * d,  GRAPH_Y1 - graph.elem[i].v, TEXT_COLOR);
-        //do_line(screen, GRAPH_X1 + (i - graph.first) * d,  GRAPH_Y1 - graph.elem[i].v, \
-        //GRAPH_X1 + (i + 1 - graph.first) * d, GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, d, do_circlefill);
+        /*
+        x1 = GRAPH_X1 + ((i - graph.first) % GRAPH_ELEMENT) * d;
+        y1 = GRAPH_Y1 - EXTERNAL_MARGIN - graph.elem[i % GRAPH_ELEMENT].v;
 
-        fastline(screen, GRAPH_X1 + (i - graph.first) * d, GRAPH_Y1 - graph.elem[i].v, \
-        GRAPH_X1 + (i + 1 - graph.first) * d, GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, TEXT_COLOR);   
+        x2 = GRAPH_X1 + ((i + 1 - graph.first) % GRAPH_ELEMENT) * d;
+        y2 = GRAPH_Y1 - EXTERNAL_MARGIN - graph.elem[(i + 1) % GRAPH_ELEMENT].v;
+
+        x0 = GRAPH_X1 + ((i - 1 - graph.first) % GRAPH_ELEMENT) * d;
+        y0 = GRAPH_Y1 - EXTERNAL_MARGIN - graph.elem[(i - 1) % GRAPH_ELEMENT].v;
+
+        x3 = GRAPH_X1 + ((i + 2 - graph.first) % GRAPH_ELEMENT) * d;
+        y3 = GRAPH_Y1 - EXTERNAL_MARGIN - graph.elem[(i + 2) % GRAPH_ELEMENT].v;
+
+        dist = fixsqrt(fixmul(itofix(x1 - x2), itofix(x1 - x2)) + fixmul(itofix(y1 - y2), itofix(y1 - y2)));
+        
+        if(i==graph.first || i == (graph.top - 1) % GRAPH_ELEMENT){
+            p1tan = itofix(0);
+            p2tan = itofix(0);
+        }else{
+            p1tan = fixatan2(itofix(y2 - y0), itofix(x2 - x0));
+            p2tan = fixatan2(itofix(y3 - y1), itofix(x3 - x1));
+        }
+
+        points[0] = x1;
+        points[1] = y1;
+
+        points[2] = x1 + fixtoi(fixmul(fixcos(p1tan), dist));
+        points[3] = y1 + fixtoi(fixmul(fixsin(p1tan), dist));
+
+        points[4] = x2 - fixtoi(fixmul(fixcos(p2tan), dist));
+        points[5] = y2 - fixtoi(fixmul(fixsin(p2tan), dist));
+
+        points[6] = x2;
+        points[7] = y2;
+
+        /*for(j = 0; j < 8; j++){
+            if(!(j%2)){
+                point[j] = GRAPH_X1 + ((i + j / 2 - graph.first) % GRAPH_ELEMENT) * d;
+            }else{
+                point[j] = GRAPH_Y1 - EXTERNAL_MARGIN - graph.elem[(i + j / 2) % GRAPH_ELEMENT].v;
+            }
+        }*/
+        //spline(screen, points, TEXT_COLOR);
+        acquire_screen();
+        fastline(screen, graph.x_point[j], GRAPH_Y1 - graph.elem[i].v, graph.x_point[j+1], GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, TEXT_COLOR);
+        release_screen();
     }
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&mutex_graph);
 }
 
 void time_add_ms(struct timespec *t, int ms)
@@ -117,17 +148,34 @@ void time_add_ms(struct timespec *t, int ms)
     }
 }
 
+/* Initialization of the queue for values that will be sampled */
+void init_queue(){
+    int i;
+    const int offset = (int)((GRAPH_WIDTH - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT); // distance between values along abscissa
+
+    pthread_mutex_lock(&mutex_graph);
+    graph.top = graph.first = 0;
+
+    // inizialization of abscissa values
+    for(i = 0; i < GRAPH_ELEMENT; ++i)
+        graph.x_point[i] = GRAPH_X1 + INTERNAL_MARGIN + i * offset;
+
+    pthread_mutex_unlock(&mutex_graph);
+}
+
 void *simulate_sensor_task()
 {
     struct timespec t;
-    int period = 100;
+    int period = 150;
 
     clock_gettime(CLOCK_MONOTONIC, &t);
     time_add_ms(&t, period);
 
+    init_queue();
+
     while (1)
     {
-        pthread_mutex_lock(&mutex);
+        pthread_mutex_lock(&mutex_graph);
         clock_gettime(CLOCK_MONOTONIC, &graph.elem[graph.top].t);
         graph.elem[graph.top].v = rand() % (UPPER_LIMIT - BOTTOM_LIMIT + 1) + BOTTOM_LIMIT;
 
@@ -138,30 +186,40 @@ void *simulate_sensor_task()
             graph.first++;
             graph.first %= GRAPH_ELEMENT;
         }
-        pthread_mutex_unlock(&mutex);
+        pthread_mutex_unlock(&mutex_graph);
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
         time_add_ms(&t, period);
     }
 }
 
+// TODO: review this function due to restore all point in graph
+/* Remove old cursor from graph and print the new one */
 void draw_cursor(){
-    int x, y;
-    const int d = (int)(GRAPH_WIDTH / GRAPH_ELEMENT);
+    unsigned int xn, yn;    // new coordinates of cursor
+    unsigned int xo, yo;    // previous coordinates of cursor
 
-    pthread_mutex_lock(&mutex_cursor);
-    x = GRAPH_X1 + cursor * d;
-    y = GRAPH_Y1 - graph.elem[cursor].v;
+    pthread_mutex_lock(&mutex_graph);
+    // remove previous cursor
+    xo = graph.x_point[p_cursor];
+    yo = GRAPH_Y1 - graph.elem[p_cursor].v;
 
-    hline(screen, x - 10, y, x + 10, TEXT_COLOR);
-    vline(screen, x, y - 10, y + 10, TEXT_COLOR);
-    pthread_mutex_unlock(&mutex_cursor);
+    hline(screen, xo - CURSOR_SIZE / 2, yo, xo + CURSOR_SIZE / 2, BKG_COLOR);
+    vline(screen, xo, yo - CURSOR_SIZE / 2, yo + CURSOR_SIZE / 2, BKG_COLOR);
+
+    // print new cursor
+    xn = graph.x_point[c_cursor];
+    yn = GRAPH_Y1 - graph.elem[c_cursor].v;
+
+    hline(screen, xn - CURSOR_SIZE / 2, yn, xn + CURSOR_SIZE / 2, CURSOR_COLOR);
+    vline(screen, xn, yn - CURSOR_SIZE / 2, yn + CURSOR_SIZE / 2, CURSOR_COLOR);
+    pthread_mutex_unlock(&mutex_graph);
 }
 
 void *graphic_task()
 {
     struct timespec t;
-    int period = 25;
+    int period = 100;
 
     clock_gettime(CLOCK_MONOTONIC, &t);
     time_add_ms(&t, period);
@@ -199,17 +257,23 @@ void *keyboard_task()
     while (1)
     {
         get_keycodes(&scan);
+
+        // update previous position of cursor
+        p_cursor = c_cursor;
+
         switch (scan)
         {
         case KEY_LEFT:
-            pthread_mutex_lock(&mutex_cursor);
-            cursor = (cursor - 1) % GRAPH_ELEMENT;
-            pthread_mutex_unlock(&mutex_cursor);
+            pthread_mutex_lock(&mutex_graph);
+            if (c_cursor != graph.first)
+                c_cursor -= 1;
+            pthread_mutex_unlock(&mutex_graph);
             break;
         case KEY_RIGHT:
-            pthread_mutex_lock(&mutex_cursor);
-            cursor = (cursor + 1) % GRAPH_ELEMENT;
-            pthread_mutex_unlock(&mutex_cursor);
+            pthread_mutex_lock(&mutex_graph);
+            if (c_cursor != graph.top)
+                c_cursor += 1;
+            pthread_mutex_unlock(&mutex_graph);
             break;
         default:
             break;
@@ -245,8 +309,8 @@ int main()
     };
     const int n_task = sizeof(task_table) / sizeof(struct Task);
 
-    pthread_mutex_init(&mutex, NULL);
-    pthread_mutex_init(&mutex_cursor, NULL);
+    pthread_mutex_init(&mutex_graph, NULL);
+    //pthread_mutex_init(&mutex_cursor, NULL);
 
     for (index = 0; index < n_task; index++)
         task_create(&task_table[index]);
