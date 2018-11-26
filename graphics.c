@@ -21,13 +21,13 @@ struct Queue
 {
     unsigned int top, first;
     struct Point elem[GRAPH_ELEMENT];
-    int x_point[GRAPH_ELEMENT];             // CHANGE NAME WITH A MORE USEFUL WORD
+    int x_point[GRAPH_ELEMENT]; // CHANGE NAME WITH A MORE USEFUL WORD
 };
 
 struct Queue graph;
 pthread_mutex_t mutex_graph;
 
-unsigned int c_cursor, p_cursor;       //current and previous position of cursor
+unsigned int c_cursor, p_cursor; //current and previous position of cursor
 //pthread_mutex_t mutex_cursor;
 
 struct Task
@@ -78,60 +78,36 @@ void draw_background()
 void draw_graphic()
 {
     int i, j;
-    const int d = (int)(GRAPH_WIDTH / GRAPH_ELEMENT);
-    int points[8];
-    int x1, x2, y1, y2, x0, y0, x3, y3;
-    int dist;
-    fixed p1tan, p2tan;
+    const int offset = (int)((GRAPH_WIDTH - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT);
+    //int points[8];
+    //int x1, x2, y1, y2, x0, y0, x3, y3;
+    //int dist;
+    //fixed p1tan, p2tan;
+    BITMAP *bmp;
+    int c_start = GRAPH_X1 + INTERNAL_MARGIN + offset;
+    int p_start = GRAPH_X1 + INTERNAL_MARGIN;
 
-    pthread_mutex_lock(&mutex_graph);
+    bmp = create_bitmap(offset * GRAPH_ELEMENT, GRAPH_HEIGHT);
+
+    if (graph.first == graph.top + 1)
+    {
+        /* NEED TO BE FIXED
+        acquire_screen();
+        blit(screen, bmp, c_start, GRAPH_Y2, 0, 0, offset * GRAPH_ELEMENT, GRAPH_HEIGHT);
+        blit(bmp, screen, 0, 0, p_start, GRAPH_Y2, offset * GRAPH_ELEMENT, GRAPH_HEIGHT);
+        release_screen();
+        */
+        for (i = graph.top, j = 0; i != (graph.top + GRAPH_ELEMENT - 2) % GRAPH_ELEMENT; i = ++i % GRAPH_ELEMENT, ++j)
+        {
+            acquire_screen();
+            fastline(screen, graph.x_point[j], GRAPH_Y1 - graph.elem[i].v, graph.x_point[j + 1], GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, BKG_COLOR);
+            release_screen();
+        };
+    }
     for (i = graph.first, j = 0; i != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT; i = ++i % GRAPH_ELEMENT, ++j)
     {
-        /*
-        x1 = GRAPH_X1 + ((i - graph.first) % GRAPH_ELEMENT) * d;
-        y1 = GRAPH_Y1 - EXTERNAL_MARGIN - graph.elem[i % GRAPH_ELEMENT].v;
-
-        x2 = GRAPH_X1 + ((i + 1 - graph.first) % GRAPH_ELEMENT) * d;
-        y2 = GRAPH_Y1 - EXTERNAL_MARGIN - graph.elem[(i + 1) % GRAPH_ELEMENT].v;
-
-        x0 = GRAPH_X1 + ((i - 1 - graph.first) % GRAPH_ELEMENT) * d;
-        y0 = GRAPH_Y1 - EXTERNAL_MARGIN - graph.elem[(i - 1) % GRAPH_ELEMENT].v;
-
-        x3 = GRAPH_X1 + ((i + 2 - graph.first) % GRAPH_ELEMENT) * d;
-        y3 = GRAPH_Y1 - EXTERNAL_MARGIN - graph.elem[(i + 2) % GRAPH_ELEMENT].v;
-
-        dist = fixsqrt(fixmul(itofix(x1 - x2), itofix(x1 - x2)) + fixmul(itofix(y1 - y2), itofix(y1 - y2)));
-        
-        if(i==graph.first || i == (graph.top - 1) % GRAPH_ELEMENT){
-            p1tan = itofix(0);
-            p2tan = itofix(0);
-        }else{
-            p1tan = fixatan2(itofix(y2 - y0), itofix(x2 - x0));
-            p2tan = fixatan2(itofix(y3 - y1), itofix(x3 - x1));
-        }
-
-        points[0] = x1;
-        points[1] = y1;
-
-        points[2] = x1 + fixtoi(fixmul(fixcos(p1tan), dist));
-        points[3] = y1 + fixtoi(fixmul(fixsin(p1tan), dist));
-
-        points[4] = x2 - fixtoi(fixmul(fixcos(p2tan), dist));
-        points[5] = y2 - fixtoi(fixmul(fixsin(p2tan), dist));
-
-        points[6] = x2;
-        points[7] = y2;
-
-        /*for(j = 0; j < 8; j++){
-            if(!(j%2)){
-                point[j] = GRAPH_X1 + ((i + j / 2 - graph.first) % GRAPH_ELEMENT) * d;
-            }else{
-                point[j] = GRAPH_Y1 - EXTERNAL_MARGIN - graph.elem[(i + j / 2) % GRAPH_ELEMENT].v;
-            }
-        }*/
-        //spline(screen, points, TEXT_COLOR);
         acquire_screen();
-        fastline(screen, graph.x_point[j], GRAPH_Y1 - graph.elem[i].v, graph.x_point[j+1], GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, TEXT_COLOR);
+        fastline(screen, graph.x_point[j], GRAPH_Y1 - graph.elem[i].v, graph.x_point[j + 1], GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, TEXT_COLOR);
         release_screen();
     }
     pthread_mutex_unlock(&mutex_graph);
@@ -149,7 +125,8 @@ void time_add_ms(struct timespec *t, int ms)
 }
 
 /* Initialization of the queue for values that will be sampled */
-void init_queue(){
+void init_queue()
+{
     int i;
     const int offset = (int)((GRAPH_WIDTH - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT); // distance between values along abscissa
 
@@ -157,7 +134,7 @@ void init_queue(){
     graph.top = graph.first = 0;
 
     // inizialization of abscissa values
-    for(i = 0; i < GRAPH_ELEMENT; ++i)
+    for (i = 0; i < GRAPH_ELEMENT; ++i)
         graph.x_point[i] = GRAPH_X1 + INTERNAL_MARGIN + i * offset;
 
     pthread_mutex_unlock(&mutex_graph);
@@ -195,9 +172,10 @@ void *simulate_sensor_task()
 
 // TODO: review this function due to restore all point in graph
 /* Remove old cursor from graph and print the new one */
-void draw_cursor(){
-    unsigned int xn, yn;    // new coordinates of cursor
-    unsigned int xo, yo;    // previous coordinates of cursor
+void draw_cursor()
+{
+    unsigned int xn, yn; // new coordinates of cursor
+    unsigned int xo, yo; // previous coordinates of cursor
 
     pthread_mutex_lock(&mutex_graph);
     // remove previous cursor
@@ -219,7 +197,7 @@ void draw_cursor(){
 void *graphic_task()
 {
     struct timespec t;
-    int period = 100;
+    int period = 30;
 
     clock_gettime(CLOCK_MONOTONIC, &t);
     time_add_ms(&t, period);
