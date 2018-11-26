@@ -8,7 +8,7 @@
 #include <string.h>
 #include "graphics.h"
 
-#define BOTTOM_LIMIT 0
+#define BOTTOM_LIMIT 100
 #define UPPER_LIMIT 200
 
 //TODO: move to graphic.h
@@ -58,7 +58,8 @@ void draw_background()
 
     // draw section for graph location
     rect(screen, GRAPH_X1, GRAPH_Y1, GRAPH_X2, GRAPH_Y2, BORDER_COLOR);
-    line(screen, GRAPH_X1, GRAPH_Y2 + 100, GRAPH_X2, GRAPH_Y2 + 100, BORDER_COLOR);
+    //line(screen, GRAPH_X1, GRAPH_Y2 + G_SUBBOX, GRAPH_X2, GRAPH_Y2 + G_SUBBOX, BORDER_COLOR);
+    rect(screen, SUBBOX_X1, SUBBOX_Y1, SUBBOX_X2, SUBBOX_Y2, BORDER_COLOR);
 
     // draw section for image location
     rect(screen, IMAGE_X1, IMAGE_Y1, IMAGE_X2, IMAGE_Y2, BORDER_COLOR);
@@ -74,28 +75,35 @@ void draw_background()
         textout_ex(screen, font, legend_text[i], LTEXT_X, LTEXT_Y + LINE_SPACE * (i + 1), TEXT_COLOR, 0);
 }
 
-int pos_graph = GRAPH_X1 + 2;
+//void do_circlefill(BITMAP *bmp, int x, int y, int d){
+//    circlefill(bmp, x, y, (int) (d/4), TEXT_COLOR);
+//}
 
 void draw_graphic()
 {
-    int i;
-    char *val = malloc(6);
-    const char *str;
+    int i, j;
+    const int d = (int)(GRAPH_WIDTH / GRAPH_ELEMENT);
+    int point[8];
 
     pthread_mutex_lock(&mutex);
-    for (i = graph.first; i != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT; i)
+    for (i = graph.first; i != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT; i = ++i % GRAPH_ELEMENT)
     {
-        line(screen, pos_graph, GRAPH_Y1 - graph.elem[i].v, (pos_graph + 1), GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, BORDER_COLOR);
-        pos_graph = ((pos_graph + 1) == GRAPH_ELEMENT + EXTERNAL_MARGIN) ? 0 : (pos_graph + 1);
-        sprintf(val, "%u", graph.elem[i].v);
-        i++;
-        i %= GRAPH_ELEMENT;
-        char cur_val[] = "Current value: ";
-        strcat(cur_val, val);
-        textout_ex(screen, font, cur_val, GRAPH_X1 + 10, GRAPH_Y2 + 20, TEXT_COLOR, 0);
+        /*for(j = 0; j < 8; j++){
+            if(!j%2)
+                point[j] = GRAPH_X1 + ((i + j / 2 - graph.first) % GRAPH_ELEMENT) * d;
+            else
+                point[j] = GRAPH_Y1 - graph.elem[(i + j / 2) % GRAPH_ELEMENT].v;
+        }
+        spline(screen, point, TEXT_COLOR);
+        */
+        //_putpixel(screen, GRAPH_X1 + (i - graph.first) * d,  GRAPH_Y1 - graph.elem[i].v, TEXT_COLOR);
+        //do_line(screen, GRAPH_X1 + (i - graph.first) * d,  GRAPH_Y1 - graph.elem[i].v, \
+        //GRAPH_X1 + (i + 1 - graph.first) * d, GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, d, do_circlefill);
+
+        fastline(screen, GRAPH_X1 + (i - graph.first) * d, GRAPH_Y1 - graph.elem[i].v, \
+        GRAPH_X1 + (i + 1 - graph.first) * d, GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, TEXT_COLOR);   
     }
     pthread_mutex_unlock(&mutex);
-    free(val);
 }
 
 void time_add_ms(struct timespec *t, int ms)
@@ -112,7 +120,7 @@ void time_add_ms(struct timespec *t, int ms)
 void *simulate_sensor_task()
 {
     struct timespec t;
-    int period = 50;
+    int period = 100;
 
     clock_gettime(CLOCK_MONOTONIC, &t);
     time_add_ms(&t, period);
@@ -121,7 +129,7 @@ void *simulate_sensor_task()
     {
         pthread_mutex_lock(&mutex);
         clock_gettime(CLOCK_MONOTONIC, &graph.elem[graph.top].t);
-        graph.elem[graph.top].v = rand() % (UPPER_LIMIT + 1);
+        graph.elem[graph.top].v = rand() % (UPPER_LIMIT - BOTTOM_LIMIT + 1) + BOTTOM_LIMIT;
 
         graph.top++;
         graph.top %= GRAPH_ELEMENT;
@@ -137,6 +145,19 @@ void *simulate_sensor_task()
     }
 }
 
+void draw_cursor(){
+    int x, y;
+    const int d = (int)(GRAPH_WIDTH / GRAPH_ELEMENT);
+
+    pthread_mutex_lock(&mutex_cursor);
+    x = GRAPH_X1 + cursor * d;
+    y = GRAPH_Y1 - graph.elem[cursor].v;
+
+    hline(screen, x - 10, y, x + 10, TEXT_COLOR);
+    vline(screen, x, y - 10, y + 10, TEXT_COLOR);
+    pthread_mutex_unlock(&mutex_cursor);
+}
+
 void *graphic_task()
 {
     struct timespec t;
@@ -146,11 +167,12 @@ void *graphic_task()
     time_add_ms(&t, period);
 
     init_interface();
+    draw_background();
 
     while (1)
     {
-        draw_background();
-        //draw_graphic();
+        draw_graphic();
+        draw_cursor();
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
         time_add_ms(&t, period);
