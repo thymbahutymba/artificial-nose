@@ -2,7 +2,6 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <semaphore.h>
 #include <sched.h>
 #include <time.h>
 #include "graphics.h"
@@ -28,6 +27,7 @@ struct Queue graph;
 pthread_mutex_t mutex_graph;
 
 unsigned int c_cursor, p_cursor; //current and previous position of cursor
+BITMAP *c_replacement; // bitmap that allows to restore the image after cursor movement 
 //pthread_mutex_t mutex_cursor;
 
 struct Task
@@ -55,6 +55,8 @@ void draw_background()
         "RIGHT: move the graph cursor to the right"};
 
     const int legend_element = sizeof(legend_text) / sizeof(char *);
+    
+    acquire_screen();
 
     // draw section for graph location
     rect(screen, GRAPH_X1, GRAPH_Y1, GRAPH_X2, GRAPH_Y2, BORDER_COLOR);
@@ -73,6 +75,11 @@ void draw_background()
 
     for (i = 0; i < legend_element; i++)
         textout_ex(screen, font, legend_text[i], LTEXT_X, LTEXT_Y + LINE_SPACE * (i + 1), TEXT_COLOR, 0);
+
+    textout_ex(screen, font, "Cursor value:", SXT_S, SYT_SCURSOR, TEXT_COLOR, 0);
+    textout_ex(screen, font, "Current value:", SXT_S, SYT_SCURRENT, TEXT_COLOR, 0);
+
+    release_screen();
 }
 
 void draw_graphic()
@@ -194,6 +201,26 @@ void draw_cursor()
     pthread_mutex_unlock(&mutex_graph);
 }
 
+/* Printing the value readed by sensor at the current time and the value under cursor */
+void draw_information() {
+    int v_current = 0, v_cursor = 0; // current and cursor value
+    char s[4]; // string to be printed
+
+    pthread_mutex_lock(&mutex_graph);
+    if (graph.top != graph.first)
+        v_current = graph.elem[(GRAPH_ELEMENT + graph.top - 1) % GRAPH_ELEMENT].v;
+    v_cursor = graph.elem[c_cursor].v;
+    pthread_mutex_unlock(&mutex_graph);
+
+    acquire_screen();
+    sprintf(s, "%i\0", v_current);
+    textout_ex(screen, font, s, SXT_D, SYT_SCURRENT, TEXT_COLOR, 0);
+
+    sprintf(s, "%i\0", v_cursor);
+    textout_ex(screen, font, s, SXT_D, SYT_SCURSOR, TEXT_COLOR, 0);
+    release_screen();
+}
+
 void *graphic_task()
 {
     struct timespec t;
@@ -209,6 +236,7 @@ void *graphic_task()
     {
         draw_graphic();
         draw_cursor();
+        draw_information();
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
         time_add_ms(&t, period);
@@ -223,6 +251,23 @@ void get_keycodes(char *scan)
     *scan = k >> 8;
 }
 
+void inc_cursor() {
+    pthread_mutex_lock(&mutex_graph);
+    p_cursor = c_cursor;
+    if (c_cursor != graph.top){
+        c_cursor += 1;
+    }
+    pthread_mutex_unlock(&mutex_graph);
+}
+
+void dec_cursor() {
+    pthread_mutex_lock(&mutex_graph);
+    p_cursor = c_cursor;
+    if (c_cursor != graph.first)
+        c_cursor -= 1;
+    pthread_mutex_unlock(&mutex_graph);
+}
+
 void *keyboard_task()
 {
     struct timespec t;
@@ -235,26 +280,16 @@ void *keyboard_task()
     while (1)
     {
         get_keycodes(&scan);
-
         // update previous position of cursor
-        p_cursor = c_cursor;
-
-        switch (scan)
-        {
-        case KEY_LEFT:
-            pthread_mutex_lock(&mutex_graph);
-            if (c_cursor != graph.first)
-                c_cursor -= 1;
-            pthread_mutex_unlock(&mutex_graph);
-            break;
-        case KEY_RIGHT:
-            pthread_mutex_lock(&mutex_graph);
-            if (c_cursor != graph.top)
-                c_cursor += 1;
-            pthread_mutex_unlock(&mutex_graph);
-            break;
-        default:
-            break;
+        switch (scan) {
+            case KEY_LEFT:
+                dec_cursor();
+                break;
+            case KEY_RIGHT:
+                inc_cursor();
+                break;
+            default:
+                break;
         }
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);

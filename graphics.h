@@ -13,7 +13,7 @@
 #define IMAGE_WIDTH		460
 #define IMAGE_HEIGHT	460
 
-#define G_SUBBOX        70
+#define G_SUBBOX        60
 #define GRAPH_WIDTH	    (SCREEN_WIDTH - EXTERNAL_MARGIN * 3 - IMAGE_WIDTH)
 #define GRAPH_HEIGHT	(IMAGE_HEIGHT - G_SUBBOX - EXTERNAL_MARGIN)
 
@@ -27,6 +27,11 @@
 #define SUBBOX_Y1       (GRAPH_Y2 - EXTERNAL_MARGIN)
 #define SUBBOX_X2       GRAPH_X2
 #define SUBBOX_Y2       (SUBBOX_Y1 - G_SUBBOX)
+
+#define SXT_S           (SUBBOX_X1 + INTERNAL_MARGIN)       // Subbox x position of static text
+#define SYT_SCURSOR     (SUBBOX_Y2 + INTERNAL_MARGIN * 2)   // Subbox text row for cursor
+#define SYT_SCURRENT    (SUBBOX_Y2 + INTERNAL_MARGIN * 4)   // subbox text row for current
+#define SXT_D           (SXT_S + 120)                        // subbox dynamc text alignment
 
 #define IMAGE_X1        (SCREEN_WIDTH - EXTERNAL_MARGIN)
 #define IMAGE_Y1        (SCREEN_HEIGHT - EXTERNAL_MARGIN)
