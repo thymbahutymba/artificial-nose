@@ -94,10 +94,7 @@ void draw_graphic() {
     int p_start = GRAPH_X1 + INTERNAL_MARGIN;
 
     bmp = create_bitmap(offset * GRAPH_ELEMENT, GRAPH_HEIGHT);
-<<<<<<< HEAD
 
-=======
->>>>>>> draw image, fix text subbox and added mutex lock
     pthread_mutex_lock(&mutex_graph);
     if (graph.first == graph.top + 1) {
         /* NEED TO BE FIXED
