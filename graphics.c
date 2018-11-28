@@ -6,13 +6,13 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define BOTTOM_LIMIT 100
-#define UPPER_LIMIT 200
+#define BOTTOM_LIMIT 0
+#define UPPER_LIMIT 255
 
 // TODO: move to graphic.h
 struct Point {
     struct timespec t; // time in which the value v is readed
-    unsigned int v;    // value readed by sensor at time t
+    unsigned char v;   // value readed by sensor at time t
 };
 
 struct Queue {
@@ -94,7 +94,11 @@ void draw_graphic() {
     int p_start = GRAPH_X1 + INTERNAL_MARGIN;
 
     bmp = create_bitmap(offset * GRAPH_ELEMENT, GRAPH_HEIGHT);
+<<<<<<< HEAD
 
+=======
+>>>>>>> draw image, fix text subbox and added mutex lock
+    pthread_mutex_lock(&mutex_graph);
     if (graph.first == graph.top + 1) {
         /* NEED TO BE FIXED
          * acquire_screen();
@@ -123,6 +127,30 @@ void draw_graphic() {
         release_screen();
     }
     pthread_mutex_unlock(&mutex_graph);
+}
+
+void draw_image() {
+    BITMAP *image_bmp;
+    unsigned char array[GRAPH_ELEMENT];
+    int i, j;
+
+    image_bmp->w = IMAGE_WIDTH;
+    image_bmp->h = IMAGE_HEIGHT;
+    image_bmp->clip = 0;
+
+    for (i = graph.first, j = 0;
+         i != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT;
+         i = ++i % GRAPH_ELEMENT, ++j) {
+             array[j] = (unsigned char)graph.elem[i].v;
+         }
+
+    *(image_bmp->line) = &array;
+    acquire_screen();
+
+    printf("%i, %i, %i, %i \n", screen->h, screen->w, screen->clip, sizeof(*(screen->line)));
+    blit(image_bmp, screen, 0, 0, IMAGE_X2 + 10, IMAGE_Y2 + 10, 460, 460);
+
+    release_screen();
 }
 
 void time_add_ms(struct timespec *t, int ms) {
@@ -164,7 +192,8 @@ void *simulate_sensor_task() {
         pthread_mutex_lock(&mutex_graph);
         clock_gettime(CLOCK_MONOTONIC, &graph.elem[graph.top].t);
         graph.elem[graph.top].v =
-            rand() % (UPPER_LIMIT - BOTTOM_LIMIT + 1) + BOTTOM_LIMIT;
+            (unsigned char)rand() % (UPPER_LIMIT - BOTTOM_LIMIT + 1) +
+            BOTTOM_LIMIT;
 
         graph.top++;
         graph.top %= GRAPH_ELEMENT;
@@ -224,6 +253,68 @@ void draw_information() {
     release_screen();
 }
 
+void draw_image_work() {
+    const unsigned int line_element =
+        (unsigned int)(IMAGE_HEIGHT - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT;
+    int i, x, y, j;
+    int size = IMAGE_HEIGHT - INTERNAL_MARGIN * 2 - line_element;
+    BITMAP *image_bmp = create_bitmap(size, size);
+
+    acquire_screen();
+    blit(screen, image_bmp, IMAGE_X2 + INTERNAL_MARGIN,
+         IMAGE_Y2 + INTERNAL_MARGIN, 0, 0, size, size);
+    blit(image_bmp, screen, 0, 0, IMAGE_X2 + INTERNAL_MARGIN,
+         IMAGE_Y2 + INTERNAL_MARGIN + line_element, size, size);
+    pthread_mutex_lock(&mutex_graph);
+
+    for (i = graph.first, j = 0; i != graph.top; i = ++i % GRAPH_ELEMENT, ++j) {
+        x = IMAGE_X2 + INTERNAL_MARGIN + line_element * j;
+        y = IMAGE_Y2 + INTERNAL_MARGIN;
+
+        rectfill(screen, x, y, x + line_element, y + line_element,
+                 graph.elem[i].v % 16);
+    }
+
+    pthread_mutex_unlock(&mutex_graph);
+    release_screen();
+}
+
+void draw_image() {
+
+    const unsigned int line_element =
+        (unsigned int)(IMAGE_HEIGHT - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT;
+    int i, x, y, j;
+    int size = IMAGE_HEIGHT - INTERNAL_MARGIN * 2 - line_element;
+    BITMAP *image_bmp = create_bitmap(size, size);
+
+    acquire_screen();
+    blit(screen, image_bmp, IMAGE_X2 + INTERNAL_MARGIN,
+         IMAGE_Y2 + INTERNAL_MARGIN, 0, 0, size, size);
+
+    // blit(image_bmp, screen, 0, 0, IMAGE_X2 + INTERNAL_MARGIN,
+    //     IMAGE_Y2 + INTERNAL_MARGIN + line_element, size, size);
+    pthread_mutex_lock(&mutex_graph);
+
+    for (i = graph.first, j = 0; i != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT; i = ++i % GRAPH_ELEMENT, ++j) {
+        x = IMAGE_X2 + INTERNAL_MARGIN + line_element * j;
+        y = IMAGE_Y2 + INTERNAL_MARGIN;
+
+        rectfill(screen, x, y, x + line_element, y + line_element,
+                 graph.elem[i].v % 16);
+
+        if (j == (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT) {
+            blit(screen, image_bmp, IMAGE_X2 + INTERNAL_MARGIN,
+                 IMAGE_Y2 + INTERNAL_MARGIN, 0, 0, size, size);
+
+            blit(image_bmp, screen, 0, 0, IMAGE_X2 + INTERNAL_MARGIN,
+                 IMAGE_Y2 + INTERNAL_MARGIN + line_element, size, size);
+        }
+    }
+
+    pthread_mutex_unlock(&mutex_graph);
+    release_screen();
+}
+
 void *graphic_task() {
     struct timespec t;
     int period = 30;
@@ -238,6 +329,7 @@ void *graphic_task() {
         draw_graphic();
         draw_cursor();
         draw_information();
+        draw_image();
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
         time_add_ms(&t, period);
