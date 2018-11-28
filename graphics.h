@@ -34,8 +34,8 @@
 #define SUBBOX_Y2 (SUBBOX_Y1 + G_SUBBOX)
 
 #define SXT_S (SUBBOX_X1 + INTERNAL_MARGIN) // x position of static text
-#define SYT_SCURSOR (SUBBOX_Y2 + INTERNAL_MARGIN * 2)  // text row for cursor
-#define SYT_SCURRENT (SUBBOX_Y2 + INTERNAL_MARGIN * 4) // text row for current
+#define SYT_SCURSOR (IMAGE_Y2 + INTERNAL_MARGIN * 2)  // text row for cursor
+#define SYT_SCURRENT (IMAGE_Y2 + INTERNAL_MARGIN * 4) // text row for current
 #define SXT_D (SXT_S + 120)                            // dynamc text alignment
 
 /**********************************************************

@@ -95,6 +95,7 @@ void draw_graphic() {
 
     bmp = create_bitmap(offset * GRAPH_ELEMENT, GRAPH_HEIGHT);
 
+    pthread_mutex_lock(&mutex_graph);
     if (graph.first == graph.top + 1) {
         /* NEED TO BE FIXED
          * acquire_screen();
@@ -123,6 +124,30 @@ void draw_graphic() {
         release_screen();
     }
     pthread_mutex_unlock(&mutex_graph);
+}
+
+void draw_image() {
+    BITMAP *image_bmp;
+    unsigned char array[GRAPH_ELEMENT];
+    int i, j;
+
+    image_bmp->w = IMAGE_WIDTH;
+    image_bmp->h = IMAGE_HEIGHT;
+    image_bmp->clip = 0;
+
+    for (i = graph.first, j = 0;
+         i != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT;
+         i = ++i % GRAPH_ELEMENT, ++j) {
+             array[j] = (unsigned char)graph.elem[i].v;
+         }
+
+    *(image_bmp->line) = &array;
+    acquire_screen();
+
+    printf("%i, %i, %i, %i \n", screen->h, screen->w, screen->clip, sizeof(*(screen->line)));
+    blit(image_bmp, screen, 0, 0, IMAGE_X2 + 10, IMAGE_Y2 + 10, 460, 460);
+
+    release_screen();
 }
 
 void time_add_ms(struct timespec *t, int ms) {
@@ -238,6 +263,7 @@ void *graphic_task() {
         draw_graphic();
         draw_cursor();
         draw_information();
+        draw_image();
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
         time_add_ms(&t, period);
