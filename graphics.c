@@ -162,8 +162,11 @@ void draw_information() {
     pthread_mutex_unlock(&mutex_graph);
 
     acquire_screen();
-    sprintf(s, "%i\0", v_current);
+    sprintf(s, "%i", v_current);
+    
+    textout_ex(screen, font, "     ", SXT_D, SYT_SCURRENT, 0, 0);
     textout_ex(screen, font, s, SXT_D, SYT_SCURRENT, TEXT_COLOR, 0);
+
     release_screen();
 }
 
