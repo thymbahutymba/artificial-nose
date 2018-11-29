@@ -10,44 +10,34 @@
 #define UPPER_LIMIT 255
 
 // TODO: move to graphic.h
-struct Point {
-    struct timespec t; // time in which the value v is readed
-    unsigned char v;   // value readed by sensor at time t
-};
-
-struct Queue {
+typedef struct {
     unsigned int top, first;
-    struct Point elem[GRAPH_ELEMENT];
     int x_point[GRAPH_ELEMENT]; // CHANGE NAME WITH A MORE USEFUL WORD
-};
+    unsigned int elem[GRAPH_ELEMENT];
+} Queue;
 
-struct Queue graph;
+Queue graph;
 pthread_mutex_t mutex_graph;
 
-unsigned int c_cursor, p_cursor; // current and previous position of cursor
-BITMAP *c_replacement; // bitmap that allows to restore the image after cursor
-                       // movement
-// pthread_mutex_t mutex_cursor;
-
-struct Task {
+typedef struct {
     pthread_t id;
     void *f;
     int priority;
-};
+} Task;
 
 void init_interface() {
     allegro_init();
     set_gfx_mode(GFX_AUTODETECT_WINDOWED, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0);
-    set_color_depth(8);
+    set_color_depth(16);
     install_keyboard();
 }
 
 void draw_background() {
     int i;
     char *legend_text[] = {"ESC: Exit from simulation",
-                           "ENTER: tbd if necessary",
-                           "LEFT: move the graph cursor to the left",
-                           "RIGHT: move the graph cursor to the right"};
+                           "ENTER:",
+                           "LEFT:",
+                           "RIGHT: "};
 
     const int legend_element = sizeof(legend_text) / sizeof(char *);
 
@@ -73,81 +63,43 @@ void draw_background() {
         textout_ex(screen, font, legend_text[i], LTEXT_X,
                    LTEXT_Y + LINE_SPACE * (i + 1), TEXT_COLOR, 0);
 
-    textout_ex(screen, font, "Cursor value:", SXT_S, SYT_SCURSOR, TEXT_COLOR,
-               0);
     textout_ex(screen, font, "Current value:", SXT_S, SYT_SCURRENT, TEXT_COLOR,
                0);
 
     release_screen();
 }
 
-void draw_graphic() {
+void draw_graphic(int *last_draw) {
     int i, j;
     const int offset =
         (int)((GRAPH_WIDTH - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT);
-    // int points[8];
-    // int x1, x2, y1, y2, x0, y0, x3, y3;
-    // int dist;
-    // fixed p1tan, p2tan;
-    BITMAP *bmp;
-    int c_start = GRAPH_X1 + INTERNAL_MARGIN + offset;
-    int p_start = GRAPH_X1 + INTERNAL_MARGIN;
 
-    bmp = create_bitmap(offset * GRAPH_ELEMENT, GRAPH_HEIGHT);
+    BITMAP *bmp;
 
     pthread_mutex_lock(&mutex_graph);
-    if (graph.first == graph.top + 1) {
-        /* NEED TO BE FIXED
-         * acquire_screen();
-         * blit(screen, bmp, c_start, GRAPH_Y2, 0, 0, offset * GRAPH_ELEMENT,
-         * GRAPH_HEIGHT); blit(bmp, screen, 0, 0, p_start, GRAPH_Y2, offset *
-         * GRAPH_ELEMENT, GRAPH_HEIGHT); release_screen();
-         */
-        for (i = graph.top, j = 0;
-             i != (graph.top + GRAPH_ELEMENT - 2) % GRAPH_ELEMENT;
-             i = ++i % GRAPH_ELEMENT, ++j) {
-            acquire_screen();
-            fastline(screen, graph.x_point[j], GRAPH_Y1 - graph.elem[i].v,
-                     graph.x_point[j + 1],
-                     GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v,
-                     BKG_COLOR);
-            release_screen();
-        };
-    }
-    for (i = graph.first, j = 0;
-         i != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT;
-         i = ++i % GRAPH_ELEMENT, ++j) {
+    for (*last_draw;
+         *last_draw != (graph.top + GRAPH_ELEMENT - 2) % GRAPH_ELEMENT;
+         *last_draw = ++(*last_draw) % GRAPH_ELEMENT) {
         acquire_screen();
-        fastline(screen, graph.x_point[j], GRAPH_Y1 - graph.elem[i].v,
-                 graph.x_point[j + 1],
-                 GRAPH_Y1 - graph.elem[(i + 1) % GRAPH_ELEMENT].v, TEXT_COLOR);
+        fastline(screen, graph.x_point[*last_draw],
+                 GRAPH_Y1 - graph.elem[*last_draw],
+                 graph.x_point[*last_draw + 1],
+                 GRAPH_Y1 - graph.elem[*last_draw + 1], TEXT_COLOR);
         release_screen();
     }
     pthread_mutex_unlock(&mutex_graph);
-}
 
-void draw_image() {
-    BITMAP *image_bmp;
-    unsigned char array[GRAPH_ELEMENT];
-    int i, j;
+    if (*last_draw == GRAPH_ELEMENT - 1) {
+        acquire_screen();
+        bmp = create_sub_bitmap(
+            screen, GRAPH_X1 + INTERNAL_MARGIN, GRAPH_Y2 + INTERNAL_MARGIN,
+            GRAPH_WIDTH - INTERNAL_MARGIN, GRAPH_HEIGHT - INTERNAL_MARGIN);
+        clear_bitmap(bmp);
+        // destroy_bitmap(bmp);
+        release_screen();
 
-    image_bmp->w = IMAGE_WIDTH;
-    image_bmp->h = IMAGE_HEIGHT;
-    image_bmp->clip = 0;
-
-    for (i = graph.first, j = 0;
-         i != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT;
-         i = ++i % GRAPH_ELEMENT, ++j) {
-             array[j] = (unsigned char)graph.elem[i].v;
-         }
-
-    *(image_bmp->line) = &array;
-    acquire_screen();
-
-    printf("%i, %i, %i, %i \n", screen->h, screen->w, screen->clip, sizeof(*(screen->line)));
-    blit(image_bmp, screen, 0, 0, IMAGE_X2 + 10, IMAGE_Y2 + 10, 460, 460);
-
-    release_screen();
+        *last_draw = 0;
+    }
 }
 
 void time_add_ms(struct timespec *t, int ms) {
@@ -187,17 +139,12 @@ void *simulate_sensor_task() {
 
     while (1) {
         pthread_mutex_lock(&mutex_graph);
-        clock_gettime(CLOCK_MONOTONIC, &graph.elem[graph.top].t);
-        graph.elem[graph.top].v =
-            (unsigned char)rand() % (UPPER_LIMIT - BOTTOM_LIMIT + 1) +
+        graph.elem[graph.top] =
+            rand() % (UPPER_LIMIT - BOTTOM_LIMIT + 1) +
             BOTTOM_LIMIT;
 
         graph.top++;
         graph.top %= GRAPH_ELEMENT;
-        if (graph.top == graph.first) {
-            graph.first++;
-            graph.first %= GRAPH_ELEMENT;
-        }
         pthread_mutex_unlock(&mutex_graph);
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
@@ -205,106 +152,53 @@ void *simulate_sensor_task() {
     }
 }
 
-// TODO: review this function due to restore all point in graph
-/* Remove old cursor from graph and print the new one */
-void draw_cursor() {
-    unsigned int xn, yn; // new coordinates of cursor
-    unsigned int xo, yo; // previous coordinates of cursor
-
-    pthread_mutex_lock(&mutex_graph);
-    // remove previous cursor
-    xo = graph.x_point[p_cursor];
-    yo = GRAPH_Y1 - graph.elem[p_cursor].v;
-
-    hline(screen, xo - CURSOR_SIZE / 2, yo, xo + CURSOR_SIZE / 2, BKG_COLOR);
-    vline(screen, xo, yo - CURSOR_SIZE / 2, yo + CURSOR_SIZE / 2, BKG_COLOR);
-
-    // print new cursor
-    xn = graph.x_point[c_cursor];
-    yn = GRAPH_Y1 - graph.elem[c_cursor].v;
-
-    hline(screen, xn - CURSOR_SIZE / 2, yn, xn + CURSOR_SIZE / 2, CURSOR_COLOR);
-    vline(screen, xn, yn - CURSOR_SIZE / 2, yn + CURSOR_SIZE / 2, CURSOR_COLOR);
-    pthread_mutex_unlock(&mutex_graph);
-}
-
-/* Printing the value readed by sensor at the current time and the value under
- * cursor */
 void draw_information() {
-    int v_current = 0, v_cursor = 0; // current and cursor value
-    char s[4];                       // string to be printed
+    int v_current = 0; // current value
+    char s[4];         // string to be printed
 
     pthread_mutex_lock(&mutex_graph);
-    if (graph.top != graph.first)
-        v_current =
-            graph.elem[(GRAPH_ELEMENT + graph.top - 1) % GRAPH_ELEMENT].v;
-    v_cursor = graph.elem[c_cursor].v;
+    if (graph.top)
+        v_current = graph.elem[graph.top - 1];
     pthread_mutex_unlock(&mutex_graph);
 
     acquire_screen();
     sprintf(s, "%i\0", v_current);
     textout_ex(screen, font, s, SXT_D, SYT_SCURRENT, TEXT_COLOR, 0);
-
-    sprintf(s, "%i\0", v_cursor);
-    textout_ex(screen, font, s, SXT_D, SYT_SCURSOR, TEXT_COLOR, 0);
     release_screen();
 }
 
-void draw_image_work() {
-    const unsigned int line_element =
-        (unsigned int)(IMAGE_HEIGHT - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT;
-    int i, x, y, j;
-    int size = IMAGE_HEIGHT - INTERNAL_MARGIN * 2 - line_element;
-    BITMAP *image_bmp = create_bitmap(size, size);
-
-    acquire_screen();
-    blit(screen, image_bmp, IMAGE_X2 + INTERNAL_MARGIN,
-         IMAGE_Y2 + INTERNAL_MARGIN, 0, 0, size, size);
-    blit(image_bmp, screen, 0, 0, IMAGE_X2 + INTERNAL_MARGIN,
-         IMAGE_Y2 + INTERNAL_MARGIN + line_element, size, size);
-    pthread_mutex_lock(&mutex_graph);
-
-    for (i = graph.first, j = 0; i != graph.top; i = ++i % GRAPH_ELEMENT, ++j) {
-        x = IMAGE_X2 + INTERNAL_MARGIN + line_element * j;
-        y = IMAGE_Y2 + INTERNAL_MARGIN;
-
-        rectfill(screen, x, y, x + line_element, y + line_element,
-                 graph.elem[i].v % 16);
-    }
-
-    pthread_mutex_unlock(&mutex_graph);
-    release_screen();
-}
-
-void draw_image() {
+void draw_image(int *last_draw) {
 
     const unsigned int line_element =
         (unsigned int)(IMAGE_HEIGHT - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT;
     int i, x, y, j;
-    int size = IMAGE_HEIGHT - INTERNAL_MARGIN * 2 - line_element;
+    int size = GRAPH_ELEMENT * line_element;
     BITMAP *image_bmp = create_bitmap(size, size);
+    BITMAP *row_bmp;
 
     acquire_screen();
-    blit(screen, image_bmp, IMAGE_X2 + INTERNAL_MARGIN,
-         IMAGE_Y2 + INTERNAL_MARGIN, 0, 0, size, size);
-
-    // blit(image_bmp, screen, 0, 0, IMAGE_X2 + INTERNAL_MARGIN,
-    //     IMAGE_Y2 + INTERNAL_MARGIN + line_element, size, size);
     pthread_mutex_lock(&mutex_graph);
 
-    for (i = graph.first, j = 0; i != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT; i = ++i % GRAPH_ELEMENT, ++j) {
-        x = IMAGE_X2 + INTERNAL_MARGIN + line_element * j;
+    for (*last_draw;
+         *last_draw != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT;
+         *last_draw = ++(*last_draw) % GRAPH_ELEMENT) {
+        x = IMAGE_X2 + INTERNAL_MARGIN + line_element * (*last_draw);
         y = IMAGE_Y2 + INTERNAL_MARGIN;
 
-        rectfill(screen, x, y, x + line_element, y + line_element,
-                 graph.elem[i].v % 16);
+        rectfill(screen, x, y, x + line_element - 1, y + line_element - 1,
+                 graph.elem[*last_draw]);
 
-        if (j == (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT) {
+        if (*last_draw == GRAPH_ELEMENT - 1) {
             blit(screen, image_bmp, IMAGE_X2 + INTERNAL_MARGIN,
                  IMAGE_Y2 + INTERNAL_MARGIN, 0, 0, size, size);
 
             blit(image_bmp, screen, 0, 0, IMAGE_X2 + INTERNAL_MARGIN,
                  IMAGE_Y2 + INTERNAL_MARGIN + line_element, size, size);
+
+            row_bmp = create_sub_bitmap(screen, IMAGE_X2 + INTERNAL_MARGIN,
+                                        IMAGE_Y2 + INTERNAL_MARGIN, size,
+                                        line_element);
+            clear_bitmap(row_bmp);
         }
     }
 
@@ -315,7 +209,7 @@ void draw_image() {
 void *graphic_task() {
     struct timespec t;
     int period = 30;
-
+    int ld_image = 0, ld_graph = 0;
     clock_gettime(CLOCK_MONOTONIC, &t);
     time_add_ms(&t, period);
 
@@ -323,10 +217,9 @@ void *graphic_task() {
     draw_background();
 
     while (1) {
-        draw_graphic();
-        draw_cursor();
+        draw_graphic(&ld_graph);
         draw_information();
-        draw_image();
+        draw_image(&ld_image);
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
         time_add_ms(&t, period);
@@ -340,51 +233,7 @@ void get_keycodes(char *scan) {
     *scan = k >> 8;
 }
 
-void inc_cursor() {
-    pthread_mutex_lock(&mutex_graph);
-    p_cursor = c_cursor;
-    if (c_cursor != graph.top) {
-        c_cursor += 1;
-    }
-    pthread_mutex_unlock(&mutex_graph);
-}
-
-void dec_cursor() {
-    pthread_mutex_lock(&mutex_graph);
-    p_cursor = c_cursor;
-    if (c_cursor != graph.first)
-        c_cursor -= 1;
-    pthread_mutex_unlock(&mutex_graph);
-}
-
-void *keyboard_task() {
-    struct timespec t;
-    int period = 25;
-    char scan;
-
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    time_add_ms(&t, period);
-
-    while (1) {
-        get_keycodes(&scan);
-        // update previous position of cursor
-        switch (scan) {
-        case KEY_LEFT:
-            dec_cursor();
-            break;
-        case KEY_RIGHT:
-            inc_cursor();
-            break;
-        default:
-            break;
-        }
-
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
-        time_add_ms(&t, period);
-    }
-}
-
-int task_create(struct Task *t) {
+int task_create(Task *t) {
     pthread_attr_t attr;
     struct sched_param param;
 
@@ -400,12 +249,11 @@ int task_create(struct Task *t) {
 
 int main() {
     int index;
-    struct Task task_table[] = {
+    Task task_table[] = {
         {-1, simulate_sensor_task, 25},
         {-1, graphic_task, 20},
-        {-1, keyboard_task, 20},
     };
-    const int n_task = sizeof(task_table) / sizeof(struct Task);
+    const int n_task = sizeof(task_table) / sizeof(Task);
 
     pthread_mutex_init(&mutex_graph, NULL);
     // pthread_mutex_init(&mutex_cursor, NULL);
