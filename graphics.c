@@ -20,6 +20,8 @@ typedef struct {
 Queue graph;
 pthread_mutex_t mutex_graph;
 
+unsigned int index_image;
+
 typedef struct {
     pthread_t id;
     void *f;
@@ -190,6 +192,8 @@ void draw_image(int *last_draw) {
     int size = (GRAPH_ELEMENT - 1) * e_height;
     BITMAP *image_bmp = create_bitmap(e_width, size);
     BITMAP *row_bmp;
+    PALETTE pal;
+    char str[80];
 
     acquire_screen();
     pthread_mutex_lock(&mutex_graph);
@@ -199,16 +203,21 @@ void draw_image(int *last_draw) {
         x = IMAGE_X2 + INTERNAL_MARGIN;
         y = IMAGE_Y2 + INTERNAL_MARGIN;
 
-        rectfill(screen, x, y, x + e_width - 1, y + e_height - 1,
-                 graph.elem[*last_draw]);
-
         blit(screen, image_bmp, x, y, 0, 0, e_width, size);
 
         blit(image_bmp, screen, 0, 0, x, y + e_height, e_width, size);
 
-        row_bmp = create_sub_bitmap(screen, x, y, e_width, e_height);
+        row_bmp = create_sub_bitmap(screen, x, y, e_width, e_height - 1);
         clear_bitmap(row_bmp);
+
+        rectfill(screen, x, y, x + e_width - 1, y + e_height - 1,
+                 graph.elem[*last_draw]);        
     }
+
+    get_palette(pal);
+    image_bmp=create_sub_bitmap(screen, x, y, e_width, size + e_height);
+    sprintf(str,"/tmp/image_neural_network/image_%08i.bmp", index_image++);
+    save_bmp(str, image_bmp, pal);
 
     pthread_mutex_unlock(&mutex_graph);
     release_screen();
