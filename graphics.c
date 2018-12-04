@@ -6,14 +6,15 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define BOTTOM_LIMIT 0
-#define UPPER_LIMIT 255
+#define RANGE (128)
+#define BOTTOM_LIMIT (0 + RANGE)
+#define UPPER_LIMIT ((65536) - RANGE)
 
 // TODO: move to graphic.h
 typedef struct {
     unsigned int top, first;
     int x_point[GRAPH_ELEMENT]; // CHANGE NAME WITH A MORE USEFUL WORD
-    unsigned int elem[GRAPH_ELEMENT];
+    unsigned long int elem[GRAPH_ELEMENT];
 } Queue;
 
 Queue graph;
@@ -69,20 +70,31 @@ void draw_background() {
 
 void draw_graphic(int *last_draw) {
     int i, j;
+
+    // distance between each point along x axis
     const int offset =
         (int)((GRAPH_WIDTH - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT);
+
+    // location of x axis on the screen
+    const unsigned int base = GRAPH_Y1 - INTERNAL_MARGIN;
+
+    // height of portion of screen where will be placed the graph
+    const unsigned int g_height = GRAPH_HEIGHT - 2 * INTERNAL_MARGIN;
 
     BITMAP *bmp;
 
     pthread_mutex_lock(&mutex_graph);
-    for (*last_draw;
-         *last_draw != (graph.top + GRAPH_ELEMENT - 2) % GRAPH_ELEMENT;
+    for (; *last_draw != (graph.top + GRAPH_ELEMENT - 2) % GRAPH_ELEMENT;
          *last_draw = ++(*last_draw) % GRAPH_ELEMENT) {
+
+        const unsigned int norm_y1 =
+            graph.elem[*last_draw] / UPPER_LIMIT * g_height;
+        const unsigned int norm_y2 =
+            graph.elem[*last_draw + 1] / UPPER_LIMIT * g_height;
+
         acquire_screen();
-        fastline(screen, graph.x_point[*last_draw],
-                 GRAPH_Y1 - graph.elem[*last_draw],
-                 graph.x_point[*last_draw + 1],
-                 GRAPH_Y1 - graph.elem[*last_draw + 1], TEXT_COLOR);
+        fastline(screen, graph.x_point[*last_draw], base - norm_y1,
+                 graph.x_point[*last_draw + 1], base - norm_y2, TEXT_COLOR);
         release_screen();
     }
     pthread_mutex_unlock(&mutex_graph);
@@ -133,13 +145,13 @@ void *simulate_sensor_task() {
     clock_gettime(CLOCK_MONOTONIC, &t);
     time_add_ms(&t, period);
 
+	const unsigned long v_rif = rand() % (UPPER_LIMIT - BOTTOM_LIMIT) + BOTTOM_LIMIT - RANGE;
+
     init_queue();
 
     while (1) {
         pthread_mutex_lock(&mutex_graph);
-        graph.elem[graph.top] =
-            rand() % (UPPER_LIMIT - BOTTOM_LIMIT + 1) + BOTTOM_LIMIT;
-
+        graph.elem[graph.top] = v_rif + (rand() % (2 * RANGE));
         graph.top++;
         graph.top %= GRAPH_ELEMENT;
         pthread_mutex_unlock(&mutex_graph);
