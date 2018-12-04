@@ -1,17 +1,24 @@
 CC = gcc
 LDFLAGS = -pthread -lrt
-CFLAGS = -Wall -Wextra `allegro-config --libs`
-DOCKERFLAGS = -ti --rm --privileged -e DISPLAY="10.10.10.10:0.0"
+CFLAGS = -Wall -Wextra
+ALLEGRO =  `allegro-config --libs`
+OBJECTS = sensor.o interface.o main.o ptask.o
+DOCKERFLAGS = -it --rm --privileged --cap-add=sys_nice -e DISPLAY="10.10.10.10:0.0"
 
-.PHONY: all
-all:
-	$(CC) $(LDFLAGS) -o graphics graphics.c $(CFLAGS)
+all: $(OBJECTS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o main $^ $(ALLEGRO)
 
-.PHONY: clean
+%.o : %.c
+	$(CC) -c $(CFLAGS) $< -o $@
+
 clean:
 	rm *.o
+	rm main
 
-.PHONY: docker
-docker:
+docker: build run
+
+build:
 	docker build --rm -f "Dockerfile" -t artificial-nose:latest .
-	docker run $(DOCKERFLAGS) artificial-nose
+
+run:
+	docker run $(DOCKERFLAGS) artificial-nose ./main
