@@ -1,10 +1,8 @@
 #include "interface.h"
-#include "ptask.h"
-#include "sensor.h"
 
 void init_interface() {
     allegro_init();
-	set_color_depth(16);
+    set_color_depth(16);
     set_gfx_mode(GFX_AUTODETECT_WINDOWED, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0);
     install_keyboard();
 }
@@ -32,7 +30,8 @@ void draw_background() {
 
     // draw section for legend location
     rect(screen, LEGEND_X1, LEGEND_Y1, LEGEND_X2, LEGEND_Y2, BORDER_COLOR);
-    textout_ex(screen, font, "LEGEND", LTEXT_X, LTEXT_Y, TITLE_COLOR, BKG_COLOR);
+    textout_ex(screen, font, "LEGEND", LTEXT_X, LTEXT_Y, TITLE_COLOR,
+               BKG_COLOR);
 
     for (i = 0; i < legend_element; i++)
         textout_ex(screen, font, legend_text[i], LTEXT_X,
@@ -57,7 +56,7 @@ void draw_graphic(unsigned int *last_draw) {
     for (; *last_draw != (r_data.top + GRAPH_ELEMENT - 2) % GRAPH_ELEMENT;
          *last_draw = ++(*last_draw) % GRAPH_ELEMENT) {
 
-        const unsigned int norm_y1 = 
+        const unsigned int norm_y1 =
             (float)r_data.elem[*last_draw] / UPPER_LIMIT * g_height;
         const unsigned int norm_y2 =
             (float)r_data.elem[*last_draw + 1] / UPPER_LIMIT * g_height;
@@ -128,12 +127,12 @@ void draw_image(unsigned int *last_draw) {
         clear_bitmap(row_bmp);
 
         rectfill(screen, x, y, x + e_width - 1, y + e_height - 1,
-                 r_data.elem[*last_draw]);        
+                 r_data.elem[*last_draw]);
     }
 
     get_palette(pal);
-    image_bmp=create_sub_bitmap(screen, x, y, e_width, size + e_height);
-    sprintf(str,"/tmp/image_neural_network/image_%08i.bmp", index_image++);
+    image_bmp = create_sub_bitmap(screen, x, y, e_width, size + e_height);
+    sprintf(str, "/tmp/image_neural_network/image_%08i.bmp", index_image++);
     save_bmp(str, image_bmp, pal);
 
     pthread_mutex_unlock(&mutex_data);

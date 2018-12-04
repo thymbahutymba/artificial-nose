@@ -1,9 +1,9 @@
 #ifndef PTASK_H
 #define PTASK_H
 
-#include <time.h>
 #include <pthread.h>
 #include <sched.h>
+#include <time.h>
 
 typedef struct {
     pthread_t id;

@@ -1,5 +1,3 @@
-#include "ptask.h"
-#include "interface.h"
 #include "sensor.h"
 
 /* Initialization of the queue for values that will be sampled */
@@ -26,7 +24,7 @@ void *simulate_sensor_task() {
     clock_gettime(CLOCK_MONOTONIC, &t);
     time_add_ms(&t, period);
 
-	const unsigned long v_rif = 6000;
+    const unsigned long v_rif = 6000;
 
     init_queue();
 

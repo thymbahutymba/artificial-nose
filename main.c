@@ -1,6 +1,6 @@
 #include "interface.h"
-#include "sensor.h"
 #include "ptask.h"
+#include "sensor.h"
 
 void get_keycodes(char *scan) {
     int k = readkey();
