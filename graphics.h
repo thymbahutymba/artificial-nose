@@ -5,9 +5,9 @@
 #define SCREEN_HEIGHT (768)
 #define EXTERNAL_MARGIN (5) // space between sections borders
 #define INTERNAL_MARGIN (8) // internal section space
-#define BORDER_COLOR (14)   // yellow color for border section
-#define TITLE_COLOR (12)    // light red for title
-#define TEXT_COLOR (15)     // white for text color
+#define BORDER_COLOR (0xFFFF00)   // yellow color for border section
+#define TITLE_COLOR (0xFF0000)    // light red for title
+#define TEXT_COLOR (0xFFFFFF)     // white for text color
 #define BKG_COLOR (0)
 
 /**********************************************************

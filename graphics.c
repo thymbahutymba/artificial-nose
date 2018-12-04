@@ -28,8 +28,8 @@ typedef struct {
 
 void init_interface() {
     allegro_init();
+	set_color_depth(16);
     set_gfx_mode(GFX_AUTODETECT_WINDOWED, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0);
-    set_color_depth(16);
     install_keyboard();
 }
 
@@ -56,14 +56,14 @@ void draw_background() {
 
     // draw section for legend location
     rect(screen, LEGEND_X1, LEGEND_Y1, LEGEND_X2, LEGEND_Y2, BORDER_COLOR);
-    textout_ex(screen, font, "LEGEND", LTEXT_X, LTEXT_Y, TITLE_COLOR, 0);
+    textout_ex(screen, font, "LEGEND", LTEXT_X, LTEXT_Y, TITLE_COLOR, BKG_COLOR);
 
     for (i = 0; i < legend_element; i++)
         textout_ex(screen, font, legend_text[i], LTEXT_X,
-                   LTEXT_Y + LINE_SPACE * (i + 1), TEXT_COLOR, 0);
+                   LTEXT_Y + LINE_SPACE * (i + 1), TEXT_COLOR, BKG_COLOR);
 
     textout_ex(screen, font, "Current value:", SXT_S, SYT_SCURRENT, TEXT_COLOR,
-               0);
+               BKG_COLOR);
 
     release_screen();
 }
