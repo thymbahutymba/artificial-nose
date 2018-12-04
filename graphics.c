@@ -87,10 +87,10 @@ void draw_graphic(int *last_draw) {
     for (; *last_draw != (graph.top + GRAPH_ELEMENT - 2) % GRAPH_ELEMENT;
          *last_draw = ++(*last_draw) % GRAPH_ELEMENT) {
 
-        const unsigned int norm_y1 =
-            graph.elem[*last_draw] / UPPER_LIMIT * g_height;
+        const unsigned int norm_y1 = 
+            (float)graph.elem[*last_draw] / UPPER_LIMIT * g_height;
         const unsigned int norm_y2 =
-            graph.elem[*last_draw + 1] / UPPER_LIMIT * g_height;
+            (float)graph.elem[*last_draw + 1] / UPPER_LIMIT * g_height;
 
         acquire_screen();
         fastline(screen, graph.x_point[*last_draw], base - norm_y1,
@@ -145,7 +145,9 @@ void *simulate_sensor_task() {
     clock_gettime(CLOCK_MONOTONIC, &t);
     time_add_ms(&t, period);
 
-	const unsigned long v_rif = rand() % (UPPER_LIMIT - BOTTOM_LIMIT) + BOTTOM_LIMIT - RANGE;
+	const unsigned long v_rif = 6000;
+
+    printf("%i", v_rif);
 
     init_queue();
 
