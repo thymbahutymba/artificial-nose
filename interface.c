@@ -1,32 +1,6 @@
-#include "graphics.h"
-#include <allegro.h>
-#include <pthread.h>
-#include <sched.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
-#define RANGE (128)
-#define BOTTOM_LIMIT (0 + RANGE)
-#define UPPER_LIMIT ((65536) - RANGE)
-
-// TODO: move to graphic.h
-typedef struct {
-    unsigned int top, first;
-    int x_point[GRAPH_ELEMENT]; // CHANGE NAME WITH A MORE USEFUL WORD
-    unsigned long int elem[GRAPH_ELEMENT];
-} Queue;
-
-Queue graph;
-pthread_mutex_t mutex_graph;
-
-unsigned int index_image;
-
-typedef struct {
-    pthread_t id;
-    void *f;
-    int priority;
-} Task;
+#include "interface.h"
+#include "ptask.h"
+#include "sensor.h"
 
 void init_interface() {
     allegro_init();
@@ -70,13 +44,7 @@ void draw_background() {
     release_screen();
 }
 
-void draw_graphic(int *last_draw) {
-    int i, j;
-
-    // distance between each point along x axis
-    const int offset =
-        (int)((GRAPH_WIDTH - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT);
-
+void draw_graphic(unsigned int *last_draw) {
     // location of x axis on the screen
     const unsigned int base = GRAPH_Y1 - INTERNAL_MARGIN;
 
@@ -85,21 +53,21 @@ void draw_graphic(int *last_draw) {
 
     BITMAP *bmp;
 
-    pthread_mutex_lock(&mutex_graph);
-    for (; *last_draw != (graph.top + GRAPH_ELEMENT - 2) % GRAPH_ELEMENT;
+    pthread_mutex_lock(&mutex_data);
+    for (; *last_draw != (r_data.top + GRAPH_ELEMENT - 2) % GRAPH_ELEMENT;
          *last_draw = ++(*last_draw) % GRAPH_ELEMENT) {
 
         const unsigned int norm_y1 = 
-            (float)graph.elem[*last_draw] / UPPER_LIMIT * g_height;
+            (float)r_data.elem[*last_draw] / UPPER_LIMIT * g_height;
         const unsigned int norm_y2 =
-            (float)graph.elem[*last_draw + 1] / UPPER_LIMIT * g_height;
+            (float)r_data.elem[*last_draw + 1] / UPPER_LIMIT * g_height;
 
         acquire_screen();
-        fastline(screen, graph.x_point[*last_draw], base - norm_y1,
-                 graph.x_point[*last_draw + 1], base - norm_y2, TEXT_COLOR);
+        fastline(screen, r_data.x_point[*last_draw], base - norm_y1,
+                 r_data.x_point[*last_draw + 1], base - norm_y2, TEXT_COLOR);
         release_screen();
     }
-    pthread_mutex_unlock(&mutex_graph);
+    pthread_mutex_unlock(&mutex_data);
 
     if (*last_draw == GRAPH_ELEMENT - 1) {
         acquire_screen();
@@ -114,65 +82,14 @@ void draw_graphic(int *last_draw) {
     }
 }
 
-void time_add_ms(struct timespec *t, int ms) {
-    t->tv_sec += ms / 1000;
-    t->tv_nsec += (ms % 1000) * 1000000;
-    if (t->tv_nsec > 1000000000) {
-        t->tv_nsec -= 1000000000;
-        t->tv_sec += 1;
-    }
-}
-
-/* Initialization of the queue for values that will be sampled */
-void init_queue() {
-    int i;
-    const int offset =
-        (int)((GRAPH_WIDTH - INTERNAL_MARGIN * 2) /
-              GRAPH_ELEMENT); // distance between values along abscissa
-
-    pthread_mutex_lock(&mutex_graph);
-    graph.top = graph.first = 0;
-
-    // inizialization of abscissa values
-    for (i = 0; i < GRAPH_ELEMENT; ++i)
-        graph.x_point[i] = GRAPH_X1 + INTERNAL_MARGIN + i * offset;
-
-    pthread_mutex_unlock(&mutex_graph);
-}
-
-void *simulate_sensor_task() {
-    struct timespec t;
-    int period = 150;
-
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    time_add_ms(&t, period);
-
-	const unsigned long v_rif = 6000;
-
-    printf("%i", v_rif);
-
-    init_queue();
-
-    while (1) {
-        pthread_mutex_lock(&mutex_graph);
-        graph.elem[graph.top] = v_rif + (rand() % (2 * RANGE));
-        graph.top++;
-        graph.top %= GRAPH_ELEMENT;
-        pthread_mutex_unlock(&mutex_graph);
-
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
-        time_add_ms(&t, period);
-    }
-}
-
 void draw_information() {
     int v_current = 0; // current value
     char s[4];         // string to be printed
 
-    pthread_mutex_lock(&mutex_graph);
-    if (graph.top)
-        v_current = graph.elem[graph.top - 1];
-    pthread_mutex_unlock(&mutex_graph);
+    pthread_mutex_lock(&mutex_data);
+    if (r_data.top)
+        v_current = r_data.elem[r_data.top - 1];
+    pthread_mutex_unlock(&mutex_data);
 
     acquire_screen();
     sprintf(s, "%i", v_current);
@@ -183,12 +100,12 @@ void draw_information() {
     release_screen();
 }
 
-void draw_image(int *last_draw) {
+void draw_image(unsigned int *last_draw) {
 
     const unsigned int e_height =
         (unsigned int)(IMAGE_HEIGHT - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT;
     const unsigned int e_width = IMAGE_WIDTH - INTERNAL_MARGIN * 2;
-    int i, x, y, j;
+    int x, y;
     int size = (GRAPH_ELEMENT - 1) * e_height;
     BITMAP *image_bmp = create_bitmap(e_width, size);
     BITMAP *row_bmp;
@@ -196,9 +113,9 @@ void draw_image(int *last_draw) {
     char str[80];
 
     acquire_screen();
-    pthread_mutex_lock(&mutex_graph);
+    pthread_mutex_lock(&mutex_data);
 
-    for (; *last_draw != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT;
+    for (; *last_draw != (r_data.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT;
          *last_draw = ++(*last_draw) % GRAPH_ELEMENT) {
         x = IMAGE_X2 + INTERNAL_MARGIN;
         y = IMAGE_Y2 + INTERNAL_MARGIN;
@@ -211,7 +128,7 @@ void draw_image(int *last_draw) {
         clear_bitmap(row_bmp);
 
         rectfill(screen, x, y, x + e_width - 1, y + e_height - 1,
-                 graph.elem[*last_draw]);        
+                 r_data.elem[*last_draw]);        
     }
 
     get_palette(pal);
@@ -219,14 +136,14 @@ void draw_image(int *last_draw) {
     sprintf(str,"/tmp/image_neural_network/image_%08i.bmp", index_image++);
     save_bmp(str, image_bmp, pal);
 
-    pthread_mutex_unlock(&mutex_graph);
+    pthread_mutex_unlock(&mutex_data);
     release_screen();
 }
 
 void *graphic_task() {
     struct timespec t;
     int period = 30;
-    int ld_image = 0, ld_graph = 0;
+    unsigned int ld_image = 0, ld_graph = 0;
     clock_gettime(CLOCK_MONOTONIC, &t);
     time_add_ms(&t, period);
 
@@ -243,46 +160,4 @@ void *graphic_task() {
     }
 
     allegro_exit();
-}
-
-void get_keycodes(char *scan) {
-    int k = readkey();
-    *scan = k >> 8;
-}
-
-int task_create(Task *t) {
-    pthread_attr_t attr;
-    struct sched_param param;
-
-    pthread_attr_init(&attr);
-    pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
-    pthread_attr_setschedpolicy(&attr, SCHED_RR);
-
-    param.sched_priority = (*t).priority;
-    pthread_attr_setschedparam(&attr, &param);
-
-    return pthread_create(&(*t).id, &attr, (*t).f, NULL);
-}
-
-int main() {
-    int index;
-    Task task_table[] = {
-        {-1, simulate_sensor_task, 25},
-        {-1, graphic_task, 20},
-    };
-    const int n_task = sizeof(task_table) / sizeof(Task);
-
-    pthread_mutex_init(&mutex_graph, NULL);
-    // pthread_mutex_init(&mutex_cursor, NULL);
-
-    for (index = 0; index < n_task; index++)
-        task_create(&task_table[index]);
-
-    do {
-    } while (!key[KEY_ESC]);
-
-    for (index = 0; index < n_task; index++)
-        pthread_cancel(task_table[index].id);
-
-    return 0;
 }

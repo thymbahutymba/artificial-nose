@@ -1,5 +1,9 @@
-#ifndef GRAPHICS_H
-#define GRAPHICS_H
+#ifndef INTERFACE_H
+#define INTERFACE_H
+
+#include <allegro.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define SCREEN_WIDTH (1024)
 #define SCREEN_HEIGHT (768)
@@ -76,13 +80,20 @@
 #define LINE_SPACE (12) // space between each line of text
 
 /**********************************************************
- * CURSOR
+ * DEFINITION AND DECLARATION
  **********************************************************/
 
-#define CURSOR_SIZE (12)
-#define CURSOR_COLOR (10)
+typedef struct {
+    unsigned int top, first;
+    int x_point[GRAPH_ELEMENT]; // CHANGE NAME WITH A MORE USEFUL WORD
+    unsigned long int elem[GRAPH_ELEMENT];
+} Queue;
 
-void init_interface();
-void draw_background();
+Queue r_data; // data readed by sensor and printed by graphich task
+pthread_mutex_t mutex_data;
 
-#endif // GRAPHICS_H
+unsigned int index_image;
+
+void *graphic_task();
+
+#endif // INTERFACE_H
