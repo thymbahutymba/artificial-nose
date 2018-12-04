@@ -35,9 +35,7 @@ void init_interface() {
 void draw_background() {
     int i;
     char *legend_text[] = {"ESC: Exit from simulation",
-                           "ENTER:",
-                           "LEFT:",
-                           "RIGHT: "};
+                           "ENTER:", "LEFT:", "RIGHT: "};
 
     const int legend_element = sizeof(legend_text) / sizeof(char *);
 
@@ -140,8 +138,7 @@ void *simulate_sensor_task() {
     while (1) {
         pthread_mutex_lock(&mutex_graph);
         graph.elem[graph.top] =
-            rand() % (UPPER_LIMIT - BOTTOM_LIMIT + 1) +
-            BOTTOM_LIMIT;
+            rand() % (UPPER_LIMIT - BOTTOM_LIMIT + 1) + BOTTOM_LIMIT;
 
         graph.top++;
         graph.top %= GRAPH_ELEMENT;
@@ -163,7 +160,7 @@ void draw_information() {
 
     acquire_screen();
     sprintf(s, "%i", v_current);
-    
+
     textout_ex(screen, font, "     ", SXT_D, SYT_SCURRENT, 0, 0);
     textout_ex(screen, font, s, SXT_D, SYT_SCURRENT, TEXT_COLOR, 0);
 
@@ -172,37 +169,31 @@ void draw_information() {
 
 void draw_image(int *last_draw) {
 
-    const unsigned int line_element =
+    const unsigned int e_height =
         (unsigned int)(IMAGE_HEIGHT - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT;
+    const unsigned int e_width = IMAGE_WIDTH - INTERNAL_MARGIN * 2;
     int i, x, y, j;
-    int size = GRAPH_ELEMENT * line_element;
-    BITMAP *image_bmp = create_bitmap(size, size);
+    int size = (GRAPH_ELEMENT - 1) * e_height;
+    BITMAP *image_bmp = create_bitmap(e_width, size);
     BITMAP *row_bmp;
 
     acquire_screen();
     pthread_mutex_lock(&mutex_graph);
 
-    for (*last_draw;
-         *last_draw != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT;
+    for (; *last_draw != (graph.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT;
          *last_draw = ++(*last_draw) % GRAPH_ELEMENT) {
-        x = IMAGE_X2 + INTERNAL_MARGIN + line_element * (*last_draw);
+        x = IMAGE_X2 + INTERNAL_MARGIN;
         y = IMAGE_Y2 + INTERNAL_MARGIN;
 
-        rectfill(screen, x, y, x + line_element - 1, y + line_element - 1,
+        rectfill(screen, x, y, x + e_width - 1, y + e_height - 1,
                  graph.elem[*last_draw]);
 
-        if (*last_draw == GRAPH_ELEMENT - 1) {
-            blit(screen, image_bmp, IMAGE_X2 + INTERNAL_MARGIN,
-                 IMAGE_Y2 + INTERNAL_MARGIN, 0, 0, size, size);
+        blit(screen, image_bmp, x, y, 0, 0, e_width, size);
 
-            blit(image_bmp, screen, 0, 0, IMAGE_X2 + INTERNAL_MARGIN,
-                 IMAGE_Y2 + INTERNAL_MARGIN + line_element, size, size);
+        blit(image_bmp, screen, 0, 0, x, y + e_height, e_width, size);
 
-            row_bmp = create_sub_bitmap(screen, IMAGE_X2 + INTERNAL_MARGIN,
-                                        IMAGE_Y2 + INTERNAL_MARGIN, size,
-                                        line_element);
-            clear_bitmap(row_bmp);
-        }
+        row_bmp = create_sub_bitmap(screen, x, y, e_width, e_height);
+        clear_bitmap(row_bmp);
     }
 
     pthread_mutex_unlock(&mutex_graph);
