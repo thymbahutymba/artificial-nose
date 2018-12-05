@@ -11,9 +11,9 @@
 #define SCREEN_HEIGHT (768)
 #define EXTERNAL_MARGIN (5)     // space between sections borders
 #define INTERNAL_MARGIN (8)     // internal section space
-#define BORDER_COLOR (0xFFFF00) // yellow color for border section
-#define TITLE_COLOR (0xFF0000)  // light red for title
-#define TEXT_COLOR (0xFFFFFF)   // white for text color
+#define BORDER_COLOR (0b1111111111100000) // yellow color for border section
+#define MAIN_COLOR (0b1111100000000000)  // light red for title
+#define TEXT_COLOR (0b1111111111111111)   // white for text color
 #define BKG_COLOR (0)
 
 /**********************************************************
@@ -88,7 +88,7 @@
 typedef struct {
     unsigned int top, first;
     int x_point[GRAPH_ELEMENT]; // CHANGE NAME WITH A MORE USEFUL WORD
-    unsigned long int elem[GRAPH_ELEMENT];
+    unsigned short int elem[GRAPH_ELEMENT];
 } Queue;
 
 Queue r_data; // data readed by sensor and printed by graphich task

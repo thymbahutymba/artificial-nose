@@ -30,7 +30,7 @@ void draw_background() {
 
     // draw section for legend location
     rect(screen, LEGEND_X1, LEGEND_Y1, LEGEND_X2, LEGEND_Y2, BORDER_COLOR);
-    textout_ex(screen, font, "LEGEND", LTEXT_X, LTEXT_Y, TITLE_COLOR,
+    textout_ex(screen, font, "LEGEND", LTEXT_X, LTEXT_Y, MAIN_COLOR,
                BKG_COLOR);
 
     for (i = 0; i < legend_element; i++)
@@ -54,7 +54,7 @@ void draw_graphic(unsigned int *last_draw) {
 
     pthread_mutex_lock(&mutex_data);
     for (; *last_draw != (r_data.top + GRAPH_ELEMENT - 2) % GRAPH_ELEMENT;
-         *last_draw = ++(*last_draw) % GRAPH_ELEMENT) {
+         *last_draw = (++(*last_draw)) % GRAPH_ELEMENT) {
 
         const unsigned int norm_y1 =
             (float)r_data.elem[*last_draw] / UPPER_LIMIT * g_height;
@@ -115,7 +115,7 @@ void draw_image(unsigned int *last_draw) {
     pthread_mutex_lock(&mutex_data);
 
     for (; *last_draw != (r_data.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT;
-         *last_draw = ++(*last_draw) % GRAPH_ELEMENT) {
+         *last_draw = (++(*last_draw)) % GRAPH_ELEMENT) {
         x = IMAGE_X2 + INTERNAL_MARGIN;
         y = IMAGE_Y2 + INTERNAL_MARGIN;
 
