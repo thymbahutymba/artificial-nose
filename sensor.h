@@ -3,6 +3,7 @@
 
 #include "interface.h"
 #include "ptask.h"
+#include <termios.h>
 //#include <stdint.h>
 
 #define RANGE (256)
@@ -10,5 +11,6 @@
 #define UPPER_LIMIT ((65536) - RANGE)
 
 void *simulate_sensor_task();
+void *read_from_sensor_task();
 
 #endif // SENSOR_H

@@ -2,10 +2,15 @@
 
 #define CCS811_ADDR 0x5B
 
+#define RANGE (256)
+#define BOTTOM_LIMIT (0 + RANGE)
+#define UPPER_LIMIT (65536 - RANGE)
+
 CCS811 sCCS811(CCS811_ADDR);
 
 void setup() {
     Serial.begin(9600);
+    /*
     CCS811Core::status returnCode = sCCS811.begin();
 
     float humidityVariable = (float)random(0, 10000) / 100;     // 0 to 100%
@@ -15,12 +20,17 @@ void setup() {
     Serial.print("Begin status code: ");
     printDriverError(returnCode);
     Serial.println();
+    */
 }
 
 void loop() {
-    uint16_t co2;
+    uint16_t co2 = (uint16_t)random(BOTTOM_LIMIT, UPPER_LIMIT);
     uint16_t tvoc;
 
+    // arduino as random number generator
+    Serial.write(co2);
+
+    /*
     if (sCCS811.dataAvailable()) {
         sCCS811.readAlgorithmResults();
         co2 = sCCS811.getCO2();
@@ -29,7 +39,7 @@ void loop() {
     } else if (sCCS811.checkForStatusError()) {
         printSensorError();
     }
-
+    */
     delay(1000);
 }
 

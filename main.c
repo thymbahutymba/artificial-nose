@@ -11,7 +11,7 @@ void get_keycodes(char *scan) {
 
 int main() {
     int index;
-    Task task_table[] = {{-1, simulate_sensor_task, 25},
+    Task task_table[] = {{-1, read_from_sensor_task, 25},
                          {-1, graphic_task, 20},
                          {-1, store_image_task, 20}};
     const int n_task = sizeof(task_table) / sizeof(Task);
