@@ -81,11 +81,11 @@ void draw_graphic(unsigned int *last_draw) {
 }
 
 void draw_information() {
-    int v_current = 0; // current value
-    char s[4];         // string to be printed
+    uint16_t v_current = 0; // current value
+    char s[5];              // string to be printed
 
     pthread_mutex_lock(&mutex_data);
-    v_current = r_data.elem[r_data.top - 1];
+    v_current = r_data.elem[(r_data.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT];
     pthread_mutex_unlock(&mutex_data);
 
     acquire_screen();
@@ -129,10 +129,7 @@ void draw_image(unsigned int *last_draw) {
     release_screen();
 }
 
-void *store_image_task() {
-    struct timespec t;
-    int period = 30;
-
+void save_image(index_image) {
     PALETTE pal;                        // color palette
     char str[80];                       // name of file to save
     int x = IMAGE_X2 + INTERNAL_MARGIN; // x top corner where image starts
@@ -142,45 +139,43 @@ void *store_image_task() {
         (unsigned int)(IMAGE_HEIGHT - INTERNAL_MARGIN * 2) /
         GRAPH_ELEMENT; // height of each element of the queue
 
-    int h = GRAPH_ELEMENT * e_height; // height of image to save
+    const unsigned int h = GRAPH_ELEMENT * e_height; // height of image to save
 
     const unsigned int w =
         IMAGE_WIDTH - INTERNAL_MARGIN * 2; // width in pixel of image
+    acquire_screen();
+    BITMAP *image_bmp = create_sub_bitmap(screen, x, y, w, h);
+    get_palette(pal);
 
-    // create sub bitmap where image is located
-    BITMAP *image_bmp = create_bitmap(w, h);
+    // name of image to be saved and save it to bmp file
+    sprintf(str, "/tmp/image_neural_network/image_%08i.bmp", index_image);
+    save_bmp(str, image_bmp, pal);
+    release_screen();
 
-    static unsigned int index_image = 0; // counter of image saved
+}
+
+void *store_image_task(void *period) {
+    struct timespec t;
+
+    unsigned int index_image = 0; // counter of image saved
 
     clock_gettime(CLOCK_MONOTONIC, &t);
-    time_add_ms(&t, period);
+    time_add_ms(&t, *(int *)period);
 
     while (1) {
-        // acquire_screen();
-        // blit(screen, image_bmp, x, y, 0, 0, e_width, size);
-
-        // blit(screen, image_bmp, x, y, 0, 0, w, h);
-        // release_screen();
-
-        get_palette(pal);
-
-        // name of image to be saved and save it to bmp file
-        sprintf(str, "/tmp/image_neural_network/image_%08i.bmp", index_image++);
-        save_bmp(str, image_bmp, pal);
+        save_image(index_image++);
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
-        time_add_ms(&t, period);
+        time_add_ms(&t, *(int *)period);
     }
 }
 
-void *graphic_task() {
+void *graphic_task(void *period) {
     struct timespec t;
-    int period = 30;
     unsigned int ld_image = 0, ld_graph = 0;
     clock_gettime(CLOCK_MONOTONIC, &t);
-    time_add_ms(&t, period);
+    time_add_ms(&t, *(int *)period);
 
-    init_interface();
     draw_background();
 
     while (1) {
@@ -189,7 +184,7 @@ void *graphic_task() {
         draw_image(&ld_image);
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
-        time_add_ms(&t, period);
+        time_add_ms(&t, *(int *)period);
     }
 
     allegro_exit();

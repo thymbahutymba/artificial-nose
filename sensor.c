@@ -17,37 +17,40 @@ void init_queue() {
     pthread_mutex_unlock(&mutex_data);
 }
 
-void *read_from_sensor_task() {
+void *read_from_sensor_task(void *period) {
     struct timespec t;
-    int period = 150;
-    int port = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NDELAY);
+    int port = open("/dev/ttyACM0", O_RDWR | O_NOCTTY | O_NDELAY);
+    uint8_t var[2];
 
     clock_gettime(CLOCK_MONOTONIC, &t);
-    time_add_ms(&t, period);
+    time_add_ms(&t, *(int *)period);
 
     struct termios options;
 
     tcgetattr(port, &options);
     cfsetispeed(&options, B9600);
-    cfsetospeed(&options, B9600);
+    //cfsetospeed(&options, B9600);
 
-    options.c_cflag |= (CLOCAL | CREAD);
-    tcsetattr(port, TCSANOW, &options);
+    //options.c_cflag |= (CLOCAL | CREAD);
+    //tcsetattr(port, TCSANOW, &options);
 
-    options.c_cflag &= ~CSIZE;
-    options.c_cflag |= CS8;
+    //options.c_cflag &= ~CSIZE;
+    //options.c_cflag |= CS8;
+
+    init_queue();
 
     while (1) {
         pthread_mutex_lock(&mutex_data);
-        read(port, r_data.elem[r_data.top++], 2);
-        r_data.top %= GRAPH_ELEMENT;
+        read(port, (void *)&var[0], 2);
+        r_data.elem[r_data.top] = var[1] << 8 | var[0];
+        r_data.top = ++r_data.top % GRAPH_ELEMENT;
         pthread_mutex_unlock(&mutex_data);
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
-        time_add_ms(&t, period);
+        time_add_ms(&t, *(int *)period);
     }
 }
-
+/*
 void *simulate_sensor_task() {
     struct timespec t;
     int period = 150;
@@ -62,11 +65,11 @@ void *simulate_sensor_task() {
     while (1) {
         pthread_mutex_lock(&mutex_data);
         r_data.elem[r_data.top] = v_rif + (rand() % (2 * RANGE));
-        r_data.top++;
-        r_data.top %= GRAPH_ELEMENT;
+        r_data.top = ++r_data.top % GRAPH_ELEMENT;
         pthread_mutex_unlock(&mutex_data);
 
         clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
         time_add_ms(&t, period);
     }
 }
+*/

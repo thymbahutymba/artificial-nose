@@ -97,5 +97,6 @@ pthread_mutex_t mutex_data;
 
 void *graphic_task();
 void *store_image_task();
+void init_interface();
 
 #endif // INTERFACE_H

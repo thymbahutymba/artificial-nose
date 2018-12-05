@@ -20,5 +20,5 @@ int task_create(Task *t) {
     param.sched_priority = (*t).priority;
     pthread_attr_setschedparam(&attr, &param);
 
-    return pthread_create(&(*t).id, &attr, (*t).f, NULL);
+    return pthread_create(&(*t).id, &attr, (*t).f, (void *)&t->period);
 }

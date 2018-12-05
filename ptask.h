@@ -9,6 +9,7 @@ typedef struct {
     pthread_t id;
     void *f;
     int priority;
+    int period;
 } Task;
 
 int task_create(Task *);
