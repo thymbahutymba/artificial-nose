@@ -6,6 +6,7 @@
 #include <allegro.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define SCREEN_WIDTH (1024)
 #define SCREEN_HEIGHT (768)
@@ -88,14 +89,13 @@
 typedef struct {
     unsigned int top, first;
     int x_point[GRAPH_ELEMENT]; // CHANGE NAME WITH A MORE USEFUL WORD
-    unsigned short int elem[GRAPH_ELEMENT];
+    uint16_t elem[GRAPH_ELEMENT];
 } Queue;
 
 Queue r_data; // data readed by sensor and printed by graphich task
 pthread_mutex_t mutex_data;
 
-unsigned int index_image;
-
 void *graphic_task();
+void *store_image_task();
 
 #endif // INTERFACE_H

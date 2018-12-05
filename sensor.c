@@ -24,7 +24,7 @@ void *simulate_sensor_task() {
     clock_gettime(CLOCK_MONOTONIC, &t);
     time_add_ms(&t, period);
 
-    const unsigned short int v_rif = 8000;
+    const uint16_t v_rif = 32000;
 
     init_queue();
 

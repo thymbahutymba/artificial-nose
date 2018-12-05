@@ -30,8 +30,7 @@ void draw_background() {
 
     // draw section for legend location
     rect(screen, LEGEND_X1, LEGEND_Y1, LEGEND_X2, LEGEND_Y2, BORDER_COLOR);
-    textout_ex(screen, font, "LEGEND", LTEXT_X, LTEXT_Y, MAIN_COLOR,
-               BKG_COLOR);
+    textout_ex(screen, font, "LEGEND", LTEXT_X, LTEXT_Y, MAIN_COLOR, BKG_COLOR);
 
     for (i = 0; i < legend_element; i++)
         textout_ex(screen, font, legend_text[i], LTEXT_X,
@@ -108,8 +107,6 @@ void draw_image(unsigned int *last_draw) {
     int size = (GRAPH_ELEMENT - 1) * e_height;
     BITMAP *image_bmp = create_bitmap(e_width, size);
     BITMAP *row_bmp;
-    PALETTE pal;
-    char str[80];
 
     acquire_screen();
     pthread_mutex_lock(&mutex_data);
@@ -129,14 +126,51 @@ void draw_image(unsigned int *last_draw) {
         rectfill(screen, x, y, x + e_width - 1, y + e_height - 1,
                  r_data.elem[*last_draw]);
     }
-
-    get_palette(pal);
-    image_bmp = create_sub_bitmap(screen, x, y, e_width, size + e_height);
-    sprintf(str, "/tmp/image_neural_network/image_%08i.bmp", index_image++);
-    save_bmp(str, image_bmp, pal);
-
     pthread_mutex_unlock(&mutex_data);
     release_screen();
+}
+
+void *store_image_task() {
+    struct timespec t;
+    int period = 30;
+
+    PALETTE pal;                        // color palette
+    char str[80];                       // name of file to save
+    int x = IMAGE_X2 + INTERNAL_MARGIN; // x top corner where image starts
+    int y = IMAGE_Y2 + INTERNAL_MARGIN; // y top corner where image starts
+
+    const unsigned int e_height =
+        (unsigned int)(IMAGE_HEIGHT - INTERNAL_MARGIN * 2) /
+        GRAPH_ELEMENT; // height of each element of the queue
+
+    int h = (GRAPH_ELEMENT - 1) * e_height; // height of image to save
+
+    const unsigned int w =
+        IMAGE_WIDTH - INTERNAL_MARGIN * 2; // width in pixel of image
+
+    BITMAP *image_bmp = create_bitmap(w, h);
+
+    static unsigned int index_image = 0; // counter of image saved
+
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    time_add_ms(&t, period);
+
+    while (1) {
+        acquire_screen();
+        get_palette(pal);
+
+        // create sub bitmap where image is located
+        image_bmp = create_sub_bitmap(screen, x, y, w, h);
+
+        // name of image to be saved and save it to bmp file
+        sprintf(str, "/tmp/image_neural_network/image_%08i.bmp", index_image++);
+        save_bmp(str, image_bmp, pal);
+
+        release_screen();
+
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
+        time_add_ms(&t, period);
+    }
 }
 
 void *graphic_task() {
