@@ -21,4 +21,5 @@ build:
 	docker build --rm -f "Dockerfile" -t artificial-nose:latest .
 
 run:
-	docker run $(DOCKERFLAGS) artificial-nose ./main
+	docker run $(DOCKERFLAGS) artificial-nose
+	
