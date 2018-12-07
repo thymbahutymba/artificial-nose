@@ -8,8 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define SCREEN_WIDTH (1024)
-#define SCREEN_HEIGHT (768)
+#define SCREEN_WIDTH (1024)               // width of the window
+#define SCREEN_HEIGHT (768)               // height of the window
 #define EXTERNAL_MARGIN (5)               // space between sections borders
 #define INTERNAL_MARGIN (8)               // internal section space
 #define BORDER_COLOR (0b1111111111100000) // yellow color for border section
@@ -17,26 +17,33 @@
 #define TEXT_COLOR (0b1111111111111111)   // white for text color
 #define GRAPH1_COLOR (0b1111100000000000) // red for CO2 graph
 #define GRAPH2_COLOR (0b0000011111100000) // green for tVOC gragh
-#define BKG_COLOR (0)
+#define BKG_COLOR (0)                     // black for background
 
-/**********************************************************
+// Sets the pixel color format to be used
+#define COLOR_MODE (16)
+
+/*******************************************************************************
  * IMAGE
- **********************************************************/
+ ******************************************************************************/
 
+// Size of section that contains image
 #define IMAGE_WIDTH (460)
 #define IMAGE_HEIGHT (460)
 
+// Coordinates for the drawing the rectangle that delimits this section
 #define IMAGE_X1 (SCREEN_WIDTH - EXTERNAL_MARGIN)
 #define IMAGE_Y1 (SCREEN_HEIGHT - EXTERNAL_MARGIN)
 #define IMAGE_X2 (IMAGE_X1 - IMAGE_WIDTH)
 #define IMAGE_Y2 (IMAGE_Y1 - IMAGE_HEIGHT)
 
-/**********************************************************
+/*******************************************************************************
  * SUBBOX
- **********************************************************/
+ ******************************************************************************/
 
+// Height of sub box where is numerically displayed the values of tVOC and CO2
 #define G_SUBBOX (40)
 
+// Coordinates for the drawing the rectangle that delimits sub box section
 #define SUBBOX_X1 (EXTERNAL_MARGIN)
 #define SUBBOX_Y1 (IMAGE_Y2)
 #define SUBBOX_X2 (SCREEN_WIDTH - EXTERNAL_MARGIN * 2 - IMAGE_WIDTH)
@@ -47,50 +54,54 @@
 #define SXT_CO2 (SXT_S + 180)  // dynamc text alignment for CO2
 #define SXT_TVOC (SXT_S + 288) // dynamc text alignment for tVOC
 
-/**********************************************************
+/*******************************************************************************
  * GRAPH
- **********************************************************/
+ ******************************************************************************/
 
+// Number of element that it's sampled by sensor
 #define GRAPH_ELEMENT (55)
 
+// Size of section that contains the graphs
 #define GRAPH_WIDTH (SCREEN_WIDTH - EXTERNAL_MARGIN * 3 - IMAGE_WIDTH)
 #define GRAPH_HEIGHT (IMAGE_HEIGHT - G_SUBBOX - EXTERNAL_MARGIN)
 
-// coordinates for each rectangle that delimit sections of screens
+// Coordinates for the drawing the rectangle that delimits graphs section
 #define GRAPH_X1 (EXTERNAL_MARGIN)
 #define GRAPH_Y1 (SCREEN_HEIGHT - EXTERNAL_MARGIN)
 #define GRAPH_X2 (GRAPH_X1 + GRAPH_WIDTH)
 #define GRAPH_Y2 (GRAPH_Y1 - GRAPH_HEIGHT)
 
-/**********************************************************
+/*******************************************************************************
  * RESULTS
- **********************************************************/
+ ******************************************************************************/
 
+// Coordinates for the drawing the rectangle that delimits result section
 #define RESULT_X1 (EXTERNAL_MARGIN)
 #define RESULT_Y1 (EXTERNAL_MARGIN)
 #define RESULT_X2 (650)
 #define RESULT_Y2 (IMAGE_Y2 - EXTERNAL_MARGIN) // GRAPH_Y2-EXTERNAL_MARGIN
 
-/**********************************************************
+/*******************************************************************************
  * LEGEND
- **********************************************************/
+ ******************************************************************************/
 
+// Coordinates for the drawing the rectangle that delimits legend section
 #define LEGEND_X1 (RESULT_X2 + EXTERNAL_MARGIN)
 #define LEGEND_Y1 (EXTERNAL_MARGIN)
 #define LEGEND_X2 (SCREEN_WIDTH - EXTERNAL_MARGIN)
 #define LEGEND_Y2 (RESULT_Y2)
 
-/* legend text location */
+// Coordinates that represents the alignment of text in legend
 #define LTEXT_X (LEGEND_X1 + INTERNAL_MARGIN)
 #define LTEXT_Y (LEGEND_Y1 + INTERNAL_MARGIN)
 #define LINE_SPACE (12) // space between each line of text
 
-/**********************************************************
+/*******************************************************************************
  * DEFINITION AND DECLARATION
- **********************************************************/
+ ******************************************************************************/
 
 typedef struct {
-    unsigned int top, first;
+    unsigned int top;
     int x_point[GRAPH_ELEMENT];   // CHANGE NAME WITH A MORE USEFUL WORD
     uint16_t co2[GRAPH_ELEMENT];  // array for CO2 data from sensor
     uint16_t tvoc[GRAPH_ELEMENT]; // array for tVOC data from sensor
