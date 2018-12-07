@@ -42,7 +42,7 @@ void *read_from_sensor_task(void *period) {
     while (1) {
         pthread_mutex_lock(&mutex_data);
         read(port, (void *)&var[0], 2);
-        r_data.elem[r_data.top] = var[1] << 8 | var[0];
+        //r_data.elem[r_data.top] = var[1] << 8 | var[0];
         r_data.top = ++r_data.top % GRAPH_ELEMENT;
         pthread_mutex_unlock(&mutex_data);
 
@@ -50,7 +50,7 @@ void *read_from_sensor_task(void *period) {
         time_add_ms(&t, *(int *)period);
     }
 }
-/*
+
 void *simulate_sensor_task() {
     struct timespec t;
     int period = 150;
@@ -58,13 +58,16 @@ void *simulate_sensor_task() {
     clock_gettime(CLOCK_MONOTONIC, &t);
     time_add_ms(&t, period);
 
-    const uint16_t v_rif = 9000;
+    const uint16_t v_rif_1 = 4000;
+
+    const uint16_t v_rif_2 = 10000;
 
     init_queue();
 
     while (1) {
         pthread_mutex_lock(&mutex_data);
-        r_data.elem[r_data.top] = v_rif + (rand() % (2 * RANGE));
+        r_data.co2[r_data.top] = v_rif_1 + (rand() % (2 * RANGE));
+        r_data.tvoc[r_data.top] = v_rif_2 + (rand() % (2 * RANGE));
         r_data.top = ++r_data.top % GRAPH_ELEMENT;
         pthread_mutex_unlock(&mutex_data);
 
@@ -72,4 +75,3 @@ void *simulate_sensor_task() {
         time_add_ms(&t, period);
     }
 }
-*/

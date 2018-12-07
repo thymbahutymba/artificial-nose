@@ -36,8 +36,8 @@ void draw_background() {
         textout_ex(screen, font, legend_text[i], LTEXT_X,
                    LTEXT_Y + LINE_SPACE * (i + 1), TEXT_COLOR, BKG_COLOR);
 
-    textout_ex(screen, font, "Current value:", SXT_S, SYT_SCURRENT, TEXT_COLOR,
-               BKG_COLOR);
+    textout_ex(screen, font, "Current value:    CO2:        tVOC:", SXT_S,
+               SYT_SCURRENT, TEXT_COLOR, BKG_COLOR);
 
     release_screen();
 }
@@ -55,14 +55,23 @@ void draw_graphic(unsigned int *last_draw) {
     for (; *last_draw != (r_data.top + GRAPH_ELEMENT - 2) % GRAPH_ELEMENT;
          *last_draw = (++(*last_draw)) % GRAPH_ELEMENT) {
 
-        const unsigned int norm_y1 =
-            (float)r_data.elem[*last_draw] / UPPER_LIMIT * g_height;
-        const unsigned int norm_y2 =
-            (float)r_data.elem[*last_draw + 1] / UPPER_LIMIT * g_height;
+        const unsigned int norm_co2_1 =
+            (float)r_data.co2[*last_draw] / UPPER_LIMIT * g_height; // CO2 norm
+        const unsigned int norm_co2_2 = (float)r_data.co2[*last_draw + 1] /
+                                        UPPER_LIMIT * g_height; // CO2 norm
+
+        const unsigned int norm_tvoc_1 = (float)r_data.tvoc[*last_draw] /
+                                         UPPER_LIMIT * g_height; // tVOC norm
+        const unsigned int norm_tvoc_2 = (float)r_data.tvoc[*last_draw + 1] /
+                                         UPPER_LIMIT * g_height; // tVOC2 norm
 
         acquire_screen();
-        fastline(screen, r_data.x_point[*last_draw], base - norm_y1,
-                 r_data.x_point[*last_draw + 1], base - norm_y2, TEXT_COLOR);
+        fastline(screen, r_data.x_point[*last_draw], base - norm_co2_1,
+                 r_data.x_point[*last_draw + 1], base - norm_co2_2,
+                 GRAPH1_COLOR); // line for CO2
+        fastline(screen, r_data.x_point[*last_draw], base - norm_tvoc_1,
+                 r_data.x_point[*last_draw + 1], base - norm_tvoc_2,
+                 GRAPH2_COLOR); // line for tVOC
         release_screen();
     }
     pthread_mutex_unlock(&mutex_data);
@@ -81,18 +90,27 @@ void draw_graphic(unsigned int *last_draw) {
 }
 
 void draw_information() {
-    uint16_t v_current = 0; // current value
-    char s[5];              // string to be printed
+    uint16_t v_co2_current = 0,
+             v_tvoc_current = 0; // current value for CO2 and tVOC
+    char s[5];                   // string to be printed
 
     pthread_mutex_lock(&mutex_data);
-    v_current = r_data.elem[(r_data.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT];
+    v_co2_current =
+        r_data.co2[(r_data.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT];
+    v_tvoc_current =
+        r_data.tvoc[(r_data.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT];
     pthread_mutex_unlock(&mutex_data);
 
     acquire_screen();
-    sprintf(s, "%i", v_current);
+    sprintf(s, "%i", v_co2_current);
 
-    textout_ex(screen, font, "     ", SXT_D, SYT_SCURRENT, 0, 0);
-    textout_ex(screen, font, s, SXT_D, SYT_SCURRENT, TEXT_COLOR, 0);
+    textout_ex(screen, font, "     ", SXT_CO2, SYT_SCURRENT, 0, 0);
+    textout_ex(screen, font, s, SXT_CO2, SYT_SCURRENT, TEXT_COLOR, 0);
+
+    sprintf(s, "%i", v_tvoc_current);
+
+    textout_ex(screen, font, "     ", SXT_TVOC, SYT_SCURRENT, 0, 0);
+    textout_ex(screen, font, s, SXT_TVOC, SYT_SCURRENT, TEXT_COLOR, 0);
 
     release_screen();
 }
@@ -123,7 +141,7 @@ void draw_image(unsigned int *last_draw) {
         clear_bitmap(row_bmp);
 
         rectfill(screen, x, y, x + e_width - 1, y + e_height - 1,
-                 r_data.elem[*last_draw]);
+                 r_data.co2[*last_draw]);
     }
     pthread_mutex_unlock(&mutex_data);
     release_screen();
@@ -151,7 +169,6 @@ void save_image(index_image) {
     sprintf(str, "/tmp/image_neural_network/image_%08i.bmp", index_image);
     save_bmp(str, image_bmp, pal);
     release_screen();
-
 }
 
 void *store_image_task(void *period) {

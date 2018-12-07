@@ -4,17 +4,19 @@
 #include "ptask.h"
 #include "sensor.h"
 #include <allegro.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 
 #define SCREEN_WIDTH (1024)
 #define SCREEN_HEIGHT (768)
-#define EXTERNAL_MARGIN (5)     // space between sections borders
-#define INTERNAL_MARGIN (8)     // internal section space
+#define EXTERNAL_MARGIN (5)               // space between sections borders
+#define INTERNAL_MARGIN (8)               // internal section space
 #define BORDER_COLOR (0b1111111111100000) // yellow color for border section
-#define MAIN_COLOR (0b1111100000000000)  // light red for title
+#define MAIN_COLOR (0b1111100000000000)   // light red for title
 #define TEXT_COLOR (0b1111111111111111)   // white for text color
+#define GRAPH1_COLOR (0b1111100000000000) // red for CO2 graph
+#define GRAPH2_COLOR (0b0000011111100000) // green for tVOC gragh
 #define BKG_COLOR (0)
 
 /**********************************************************
@@ -42,7 +44,8 @@
 
 #define SXT_S (SUBBOX_X1 + INTERNAL_MARGIN) // x position of static text
 #define SYT_SCURRENT (IMAGE_Y2 + INTERNAL_MARGIN * 2) // text row for current
-#define SXT_D (SXT_S + 120)                           // dynamc text alignment
+#define SXT_CO2 (SXT_S + 180)  // dynamc text alignment for CO2
+#define SXT_TVOC (SXT_S + 288) // dynamc text alignment for tVOC
 
 /**********************************************************
  * GRAPH
@@ -88,8 +91,9 @@
 
 typedef struct {
     unsigned int top, first;
-    int x_point[GRAPH_ELEMENT]; // CHANGE NAME WITH A MORE USEFUL WORD
-    uint16_t elem[GRAPH_ELEMENT];
+    int x_point[GRAPH_ELEMENT];   // CHANGE NAME WITH A MORE USEFUL WORD
+    uint16_t co2[GRAPH_ELEMENT];  // array for CO2 data from sensor
+    uint16_t tvoc[GRAPH_ELEMENT]; // array for tVOC data from sensor
 } Queue;
 
 Queue r_data; // data readed by sensor and printed by graphich task
