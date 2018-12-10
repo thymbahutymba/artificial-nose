@@ -2,7 +2,7 @@
 
 #define CCS811_ADDR 0x5B
 
-#define RANGE (256)
+#define RANGE (512)
 #define BOTTOM_LIMIT (0 + RANGE)
 #define UPPER_LIMIT (65536 - RANGE)
 
@@ -15,8 +15,8 @@ void setup() {
 //    rif_co2 = (uint16_t)random(BOTTOM_LIMIT, UPPER_LIMIT);
 //    rif_tVOC = (uint16_t)random(BOTTOM_LIMIT, UPPER_LIMIT);
 
-    rif_co2 = 10000;
-    rif_tVOC = 15000;
+    rif_co2 = 57000;
+    rif_tVOC = 61000;
 
     /*
     CCS811Core::status returnCode = sCCS811.begin();
@@ -52,7 +52,7 @@ void loop() {
         printSensorError();
     }
     */
-    delay(1000);
+    delay(500);
 }
 
 void printDebug(uint16_t co2, uint16_t tvoc) {

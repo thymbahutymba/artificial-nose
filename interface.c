@@ -182,7 +182,7 @@ void draw_image(unsigned int *last_draw) {
 
         color = ((uint32_t) (r_data.co2[*last_draw]) << 16) | r_data.tvoc[*last_draw];
 
-        rectfill(screen, x, y, x + e_width - 1, y + e_height - 1, 0xffffffff);
+        rectfill(screen, x, y, x + e_width - 1, y + e_height - 1, color);
     }
     pthread_mutex_unlock(&mutex_data);
     release_screen();
