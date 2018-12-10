@@ -8,19 +8,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define SCREEN_WIDTH (1024)               // width of the window
-#define SCREEN_HEIGHT (768)               // height of the window
-#define EXTERNAL_MARGIN (5)               // space between sections borders
-#define INTERNAL_MARGIN (8)               // internal section space
-#define BORDER_COLOR (0b1111111111100000) // yellow color for border section
-#define MAIN_COLOR (0b1111100000000000)   // light red for title
-#define TEXT_COLOR (0b1111111111111111)   // white for text color
-#define GRAPH1_COLOR (0b1111100000000000) // red for CO2 graph
-#define GRAPH2_COLOR (0b0000011111100000) // green for tVOC gragh
-#define BKG_COLOR (0)                     // black for background
+#define SCREEN_WIDTH (1024)     // width of the window
+#define SCREEN_HEIGHT (768)     // height of the window
+#define EXTERNAL_MARGIN (5)     // space between sections borders
+#define INTERNAL_MARGIN (8)     // internal section space
+#define BORDER_COLOR (0xffff00) // yellow color for border section
+#define MAIN_COLOR (0xff0000)   // red for title
+#define TEXT_COLOR (0xffffff)   // white for text color
+#define GRAPH1_COLOR (0xff0000) // red for CO2 graph
+#define GRAPH2_COLOR (0x00ff00) // green for tVOC gragh
+#define BKG_COLOR (0x000000)    // black for background
 
 // Sets the pixel color format to be used
-#define COLOR_MODE (16)
+#define COLOR_MODE (32)
 
 /*******************************************************************************
  * IMAGE
