@@ -8,14 +8,15 @@
 
 CCS811 sCCS811(CCS811_ADDR);
 uint16_t rif_co2;
+uint16_t rif_tVOC;
 
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
 //    rif_co2 = (uint16_t)random(BOTTOM_LIMIT, UPPER_LIMIT);
 //    rif_tVOC = (uint16_t)random(BOTTOM_LIMIT, UPPER_LIMIT);
 
     rif_co2 = 10000;
-    uint16_t rif_tVOC = 15000;
+    rif_tVOC = 15000;
 
     /*
     CCS811Core::status returnCode = sCCS811.begin();
@@ -32,14 +33,14 @@ void setup() {
 
 void loop() {
     uint16_t co2 = rif_co2 + (uint16_t)random(0, RANGE);
-    uint16_t tVOC = (uint16_t)random(0, RANGE);
+    uint16_t tVOC = rif_tVOC + (uint16_t)random(0, RANGE);
     uint8_t s[] = {
         (uint8_t)co2, (uint8_t)(co2 >> 8),
-        //(uint8_t)tVOC, (uint8_t) tVOC >> 8,
+        (uint8_t)tVOC, (uint8_t)(tVOC >> 8),
       };
 
     // arduino as random number generator
-    Serial.write(s, 2);
+    Serial.write(s, 4);
     //Serial.print(10000);
     /*
     if (sCCS811.dataAvailable()) {
