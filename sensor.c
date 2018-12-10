@@ -8,7 +8,7 @@ void init_queue() {
               GRAPH_ELEMENT); // distance between values along abscissa
 
     pthread_mutex_lock(&mutex_data);
-    r_data.top = r_data.first = 0;
+    r_data.top = 0;
 
     // inizialization of abscissa values
     for (i = 0; i < GRAPH_ELEMENT; ++i)
@@ -20,29 +20,28 @@ void init_queue() {
 void *read_from_sensor_task(void *period) {
     struct timespec t;
     int port = open("/dev/ttyACM0", O_RDWR | O_NOCTTY | O_NDELAY);
-    uint8_t var[2];
+    uint8_t var[4];
 
     clock_gettime(CLOCK_MONOTONIC, &t);
     time_add_ms(&t, *(int *)period);
 
     struct termios options;
 
+    // set port attribute
     tcgetattr(port, &options);
-    cfsetispeed(&options, B9600);
-    //cfsetospeed(&options, B9600);
+    cfsetispeed(&options, B115200);
+    cfsetospeed(&options, B115200);
+    cfmakeraw(&options);
+    tcsetattr(port, TCSANOW, &options);
 
-    //options.c_cflag |= (CLOCAL | CREAD);
-    //tcsetattr(port, TCSANOW, &options);
-
-    //options.c_cflag &= ~CSIZE;
-    //options.c_cflag |= CS8;
-
+    // initialize x value of the queue
     init_queue();
 
     while (1) {
         pthread_mutex_lock(&mutex_data);
-        read(port, (void *)&var[0], 2);
-        //r_data.elem[r_data.top] = var[1] << 8 | var[0];
+        read(port, (void *)&var[0], 4);
+        r_data.co2[r_data.top] = var[1] << 8 | var[0];
+        r_data.tvoc[r_data.top] = var[3] << 8 | var[2];
         r_data.top = ++r_data.top % GRAPH_ELEMENT;
         pthread_mutex_unlock(&mutex_data);
 
