@@ -160,6 +160,7 @@ void draw_image(unsigned int *last_draw) {
         (unsigned int)(IMAGE_HEIGHT - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT;
     const unsigned int e_width = IMAGE_WIDTH - INTERNAL_MARGIN * 2;
     int x, y;
+    uint32_t color;
     int size = (GRAPH_ELEMENT - 1) * e_height;
     BITMAP *image_bmp = create_bitmap(e_width, size);
     BITMAP *row_bmp;
@@ -179,8 +180,9 @@ void draw_image(unsigned int *last_draw) {
         row_bmp = create_sub_bitmap(screen, x, y, e_width, e_height - 1);
         clear_bitmap(row_bmp);
 
-        rectfill(screen, x, y, x + e_width - 1, y + e_height - 1,
-                 r_data.co2[*last_draw]);
+        color = ((uint32_t) (r_data.co2[*last_draw]) << 16) | r_data.tvoc[*last_draw];
+
+        rectfill(screen, x, y, x + e_width - 1, y + e_height - 1, 0xffffffff);
     }
     pthread_mutex_unlock(&mutex_data);
     release_screen();
