@@ -3,6 +3,7 @@
 
 #include "ptask.h"
 #include "sensor.h"
+#include "keyboard.h"
 #include <allegro.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -55,6 +56,19 @@
 #define SXT_TVOC (SXT_S + 288) // dynamc text alignment for tVOC
 
 /*******************************************************************************
+ * KEYBOAD INPUT
+ ******************************************************************************/
+
+#define INPUT_H (40)
+#define INPUT_X1 (EXTERNAL_MARGIN)
+#define INPUT_Y1 (EXTERNAL_MARGIN)
+#define INPUT_X2 (650)
+#define INPUT_Y2 (INPUT_Y1 + INPUT_H)
+
+#define TEXT_X1 (INPUT_X1 + INTERNAL_MARGIN)
+#define TEXT_Y1 (INPUT_Y1 + INTERNAL_MARGIN * 2)
+
+/*******************************************************************************
  * GRAPH
  ******************************************************************************/
 
@@ -77,8 +91,8 @@
 
 // Coordinates for the drawing the rectangle that delimits result section
 #define RESULT_X1 (EXTERNAL_MARGIN)
-#define RESULT_Y1 (EXTERNAL_MARGIN)
-#define RESULT_X2 (650)
+#define RESULT_Y1 (INPUT_Y2 + EXTERNAL_MARGIN)
+#define RESULT_X2 (INPUT_X2)
 #define RESULT_Y2 (IMAGE_Y2 - EXTERNAL_MARGIN) // GRAPH_Y2-EXTERNAL_MARGIN
 
 /*******************************************************************************

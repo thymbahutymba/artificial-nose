@@ -1,34 +1,32 @@
 #include "interface.h"
 #include "ptask.h"
 #include "sensor.h"
-
-#include <sys/stat.h>
-
-void get_keycodes(char *scan) {
-    int k = readkey();
-    *scan = k >> 8;
-}
+#include "keyboard.h"
 
 int main() {
     int index;
 
     Task task_table[] = {{-1, read_from_sensor_task, 25, 300},
                          {-1, graphic_task, 20, 20},
-                         {-1, store_image_task, 20, 500}};
+                         {-1, neural_network_task, 20, 30},
+                         /*{-1, store_image_task, 20, 500},*/
+                         {-1, keyboard_task, 20, 20}};
     const int n_task = sizeof(task_table) / sizeof(Task);
 
     pthread_mutex_init(&mutex_data, NULL);
 
-    mkdir("/tmp/image_neural_network", 0755);
+    mkdir(PATH_I_NN, 0755);
     init_interface();
+
     for (index = 0; index < n_task; index++)
         task_create(&task_table[index]);
 
     do {
-    } while (!key[KEY_ESC]);
+    } while (pthread_join(task_table[n_task - 1].id, NULL));
 
-    for (index = 0; index < n_task; index++)
+    for (index = 0; index < n_task - 1; index++)
         pthread_cancel(task_table[index].id);
 
+    allegro_exit();
     return 0;
 }

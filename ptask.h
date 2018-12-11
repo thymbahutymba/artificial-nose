@@ -14,5 +14,8 @@ typedef struct {
 
 int task_create(Task *);
 void time_add_ms(struct timespec *, int);
+void time_copy(struct timespec *, struct timespec);
+void wait_for_activation(struct timespec *, int);
+void set_activation(struct timespec *, int);
 
 #endif // PTASK_H

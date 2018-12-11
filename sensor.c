@@ -22,8 +22,7 @@ void *read_from_sensor_task(void *period) {
     int port = open("/dev/ttyACM0", O_RDWR | O_NOCTTY | O_NDELAY);
     uint8_t var[4];
 
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    time_add_ms(&t, *(int *)period);
+    set_activation(&t, *((int *)period));
 
     struct termios options;
 
@@ -45,17 +44,15 @@ void *read_from_sensor_task(void *period) {
         r_data.top = ++r_data.top % GRAPH_ELEMENT;
         pthread_mutex_unlock(&mutex_data);
 
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
-        time_add_ms(&t, *(int *)period);
+        wait_for_activation(&t, *((int *)period));
     }
 }
-
+/*
 void *simulate_sensor_task() {
     struct timespec t;
     int period = 150;
 
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    time_add_ms(&t, period);
+    set_activation(&t, *((int *)period));
 
     const uint16_t v_rif_1 = 4000;
 
@@ -70,7 +67,7 @@ void *simulate_sensor_task() {
         r_data.top = ++r_data.top % GRAPH_ELEMENT;
         pthread_mutex_unlock(&mutex_data);
 
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
-        time_add_ms(&t, period);
+        wait_for_activation(&t, *((int *)period));
     }
 }
+*/

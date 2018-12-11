@@ -1,14 +1,10 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <tensorflow/c/c_api.h>
-
-#include "keyboard.h"
-#include "ptask.h"
+#include "neural_network.h"
 
 void free_buffer(void *data, size_t length) { free(data); }
 
-// read file containing the graph of the neural network and initialize the
-// TF_Buffer
+/* Read file containing the graph of the neural network and initialize the
+ * TF_Buffer
+ */
 TF_Buffer *read_file(const char *file) {
     FILE *f = fopen(file, "rb");
     fseek(f, 0, SEEK_END);

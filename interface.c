@@ -8,7 +8,6 @@ void init_interface() {
     allegro_init();
     set_color_depth(COLOR_MODE);
     set_gfx_mode(GFX_AUTODETECT_WINDOWED, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0);
-    install_keyboard();
 }
 
 /*
@@ -19,7 +18,8 @@ void draw_background() {
 
     // Legend that display which are the possible interaction with program
     char *legend_text[] = {"ESC: Exit from simulation",
-                           "ENTER:", "LEFT:", "RIGHT: "};
+                           "ENTER: switch between mode",
+                           };
 
     const int legend_element = sizeof(legend_text) / sizeof(char *);
 
@@ -40,6 +40,9 @@ void draw_background() {
     // Draws rectangle that delimits the legend section
     rect(screen, LEGEND_X1, LEGEND_Y1, LEGEND_X2, LEGEND_Y2, BORDER_COLOR);
     textout_ex(screen, font, "LEGEND", LTEXT_X, LTEXT_Y, MAIN_COLOR, BKG_COLOR);
+
+    // Draws rectangle that delimits the keyboard input
+    rect(screen, INPUT_X1, INPUT_Y1, INPUT_X2, INPUT_Y2, BORDER_COLOR);
 
     // Prints each row that is contained in legend
     for (i = 0; i < legend_element; i++)
@@ -137,7 +140,7 @@ void draw_information() {
     pthread_mutex_unlock(&mutex_data);
 
     acquire_screen();
-    
+
     // Print of last CO2 value
     sprintf(s, "%i", c_CO2);
     textout_ex(screen, font, "     ", SXT_CO2, SYT_SCURRENT, 0, 0);
@@ -180,7 +183,8 @@ void draw_image(unsigned int *last_draw) {
         row_bmp = create_sub_bitmap(screen, x, y, e_width, e_height - 1);
         clear_bitmap(row_bmp);
 
-        color = ((uint32_t) (r_data.co2[*last_draw]) << 16) | r_data.tvoc[*last_draw];
+        color = ((uint32_t)(r_data.co2[*last_draw]) << 16) |
+                r_data.tvoc[*last_draw];
 
         rectfill(screen, x, y, x + e_width - 1, y + e_height - 1, color);
     }
@@ -188,7 +192,7 @@ void draw_image(unsigned int *last_draw) {
     release_screen();
 }
 
-void save_image(index_image) {
+void save_image(int index_image) {
     PALETTE pal;                        // color palette
     char str[80];                       // name of file to save
     int x = IMAGE_X2 + INTERNAL_MARGIN; // x top corner where image starts
@@ -217,22 +221,31 @@ void *store_image_task(void *period) {
 
     unsigned int index_image = 0; // counter of image saved
 
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    time_add_ms(&t, *(int *)period);
+    set_activation(&t, *((int *)period));
 
     while (1) {
         save_image(index_image++);
 
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
-        time_add_ms(&t, *(int *)period);
+        wait_for_activation(&t, *((int *)period));
     }
+}
+
+void draw_text() {
+    char *txt_mode[] = {"WRITING: ", "SAVING:  "};
+    pthread_mutex_lock(&mutex_keyboard);
+    textout_ex(screen, font, txt_mode[act_mode], TEXT_X1, TEXT_Y1, MAIN_COLOR,
+               BKG_COLOR);
+    textout_ex(screen, font, keyboard_buf, TEXT_X1 + 80, TEXT_Y1, TEXT_COLOR,
+               BKG_COLOR);
+    pthread_mutex_unlock(&mutex_keyboard);
 }
 
 void *graphic_task(void *period) {
     struct timespec t;
-    unsigned int ld_image = 0, ld_graph = 0;
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    time_add_ms(&t, *(int *)period);
+    unsigned int ld_image = 0;
+    unsigned int ld_graph = 0;
+
+    set_activation(&t, *((int *)period));
 
     draw_background();
 
@@ -240,9 +253,9 @@ void *graphic_task(void *period) {
         draw_graphic(&ld_graph);
         draw_information();
         draw_image(&ld_image);
+        draw_text();
 
-        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &t, NULL);
-        time_add_ms(&t, *(int *)period);
+        wait_for_activation(&t, *((int *)period));
     }
 
     allegro_exit();
