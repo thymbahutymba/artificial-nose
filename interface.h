@@ -1,9 +1,9 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
+#include "keyboard.h"
 #include "ptask.h"
 #include "sensor.h"
-#include "keyboard.h"
 #include <allegro.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -23,6 +23,9 @@
 // Sets the pixel color format to be used
 #define COLOR_MODE (32)
 
+// Number of element that it's sampled by sensor
+#define GRAPH_ELEMENT (55)
+
 /*******************************************************************************
  * IMAGE
  ******************************************************************************/
@@ -36,6 +39,13 @@
 #define IMAGE_Y1 (SCREEN_HEIGHT - EXTERNAL_MARGIN)
 #define IMAGE_X2 (IMAGE_X1 - IMAGE_WIDTH)
 #define IMAGE_Y2 (IMAGE_Y1 - IMAGE_HEIGHT)
+
+#define IMG_XT (IMAGE_X2 + INTERNAL_MARGIN) // x starting point for image
+#define IMG_YT (IMAGE_Y2 + INTERNAL_MARGIN) // y starting point for image
+
+// Height and width of the rectangle that represents a single element
+#define EL_W (IMAGE_WIDTH - INTERNAL_MARGIN * 2)
+#define EL_H ((IMAGE_HEIGHT - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT)
 
 /*******************************************************************************
  * SUBBOX
@@ -71,9 +81,6 @@
 /*******************************************************************************
  * GRAPH
  ******************************************************************************/
-
-// Number of element that it's sampled by sensor
-#define GRAPH_ELEMENT (55)
 
 // Size of section that contains the graphs
 #define GRAPH_WIDTH (SCREEN_WIDTH - EXTERNAL_MARGIN * 3 - IMAGE_WIDTH)

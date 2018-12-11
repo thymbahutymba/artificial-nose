@@ -4,22 +4,22 @@
 
 #include "interface.h"
 
+/* Initialization of allegro and setting color mode to RGBA */
 void init_interface() {
     allegro_init();
     set_color_depth(COLOR_MODE);
     set_gfx_mode(GFX_AUTODETECT_WINDOWED, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0);
 }
 
-/*
- * Prints of all background that will not be changed during program execution
- */
+/* Prints of all background that will not be changed during program execution */
 void draw_background() {
     int i;
 
     // Legend that display which are the possible interaction with program
-    char *legend_text[] = {"ESC: Exit from simulation",
-                           "ENTER: switch between mode",
-                           };
+    char *legend_text[] = {
+        "ESC: Exit from simulation",
+        "ENTER: switch between mode",
+    };
 
     const int legend_element = sizeof(legend_text) / sizeof(char *);
 
@@ -56,18 +56,43 @@ void draw_background() {
     release_screen();
 }
 
-/*
- * Drawing of both graphs tVOC and CO2 that represents the last GRAPH_ELEMENT
- * values that were sampled by sensor
- */
-void draw_graphic(unsigned int *last_draw) {
-    // Location of x axis on the screen
-    const unsigned int base = GRAPH_Y1 - INTERNAL_MARGIN;
-
+/* Normalization of coordinates for graph drawing */
+void norm_cord(int index, unsigned int *n_co2, unsigned int *n_tvoc) {
     // Height of portion of screen where will be placed the graph
     const unsigned int g_height = GRAPH_HEIGHT - 2 * INTERNAL_MARGIN;
 
-    BITMAP *bmp;
+    /* Normalization of CO2 value among the height of the section used for
+     * the graphs. */
+    *n_co2 = (float)r_data.co2[index] / UPPER_LIMIT * g_height;
+
+    /* Normalization of tVOC value among the height of the section used for
+     * the graphs. */
+    *n_tvoc = (float)r_data.tvoc[index] / UPPER_LIMIT * g_height;
+}
+
+/* Clearing the section containing the graphs */
+void clear_graph() {
+    BITMAP *bmp; // Bitmap for clearing image on bottom
+
+    acquire_screen();
+
+    // Create reference to graph zone
+    bmp = create_sub_bitmap(
+        screen, GRAPH_X1 + INTERNAL_MARGIN, GRAPH_Y2 + INTERNAL_MARGIN,
+        GRAPH_WIDTH - INTERNAL_MARGIN, GRAPH_HEIGHT - INTERNAL_MARGIN);
+
+    // Clean graph section for drawing new graph from start
+    clear_bitmap(bmp);
+    release_screen();
+}
+
+/* Drawing of both graphs tVOC and CO2 that represents the last GRAPH_ELEMENT
+ * values that were sampled by sensor. */
+void draw_graphic(unsigned int *last_draw) {
+    // Location of x axis on the screen
+    const unsigned int base = GRAPH_Y1 - INTERNAL_MARGIN;
+    unsigned int n_co2_1, n_tvoc_1; // normalized value of line start point
+    unsigned int n_co2_2, n_tvoc_2; // normalized value of line end point
 
     pthread_mutex_lock(&mutex_data);
 
@@ -75,63 +100,37 @@ void draw_graphic(unsigned int *last_draw) {
     for (; *last_draw != (r_data.top + GRAPH_ELEMENT - 2) % GRAPH_ELEMENT;
          *last_draw = (++(*last_draw)) % GRAPH_ELEMENT) {
 
-        /*
-         * Normalization of CO2 value among the height of the section used for
-         * the graphs. The normalized values ​​are two in order to draw a
-         * line that joins both points.
-         */
-        const unsigned int norm_co2_1 =
-            (float)r_data.co2[*last_draw] / UPPER_LIMIT * g_height;
-        const unsigned int norm_co2_2 =
-            (float)r_data.co2[*last_draw + 1] / UPPER_LIMIT * g_height;
-
-        /*
-         * Normalization of tVOC value among the height of the section used for
-         * the graphs. The normalized values ​​are two in order to draw a
-         * line that joins both points.
-         */
-        const unsigned int norm_tvoc_1 =
-            (float)r_data.tvoc[*last_draw] / UPPER_LIMIT * g_height;
-        const unsigned int norm_tvoc_2 =
-            (float)r_data.tvoc[*last_draw + 1] / UPPER_LIMIT * g_height;
+        /* Compute the normalized values. These values are two in order to draw
+         * a line that joins both points. */
+        norm_cord(*last_draw, &n_co2_1, &n_tvoc_1);
+        norm_cord(*last_draw, &n_co2_2, &n_tvoc_2);
 
         acquire_screen();
-        // Drawing of the line for CO2 graph that joins the two points that
-        // have been considered
-        fastline(screen, r_data.x_point[*last_draw], base - norm_co2_1,
-                 r_data.x_point[*last_draw + 1], base - norm_co2_2,
-                 GRAPH1_COLOR);
+        /* Drawing of the line for CO2 graph that joins the two points that
+         * have been considered */
+        fastline(screen, r_data.x_point[*last_draw], base - n_co2_1,
+                 r_data.x_point[*last_draw + 1], base - n_co2_2, GRAPH1_COLOR);
 
-        // Drawing of the line for tVOC graph that joins the two points that
-        // have been considered
-        fastline(screen, r_data.x_point[*last_draw], base - norm_tvoc_1,
-                 r_data.x_point[*last_draw + 1], base - norm_tvoc_2,
-                 GRAPH2_COLOR);
+        /* Drawing of the line for tVOC graph that joins the two points that
+         * have been considered */
+        fastline(screen, r_data.x_point[*last_draw], base - n_tvoc_1,
+                 r_data.x_point[*last_draw + 1], base - n_tvoc_2, GRAPH2_COLOR);
         release_screen();
     }
     pthread_mutex_unlock(&mutex_data);
 
-    // Clearing the section containing the graphs if the queue has been filled
+    // Check if the queue has been filled and then clear the graph section
     if (*last_draw == GRAPH_ELEMENT - 1) {
-        acquire_screen();
-        bmp = create_sub_bitmap(
-            screen, GRAPH_X1 + INTERNAL_MARGIN, GRAPH_Y2 + INTERNAL_MARGIN,
-            GRAPH_WIDTH - INTERNAL_MARGIN, GRAPH_HEIGHT - INTERNAL_MARGIN);
-        clear_bitmap(bmp);
-        release_screen();
-
+        clear_graph();
         // Update of the index containing the last element drawn
         *last_draw = 0;
     }
 }
 
-/*
- * TODO: Add an explanation of the function
- */
+/* Print on screen the current values readed from sensor */
 void draw_information() {
-    uint16_t c_CO2 = 0,
-             c_tVOC = 0; // current values for CO2 and tVOC
-    char s[5];           // string to be printed
+    uint16_t c_CO2 = 0, c_tVOC = 0; // current values for CO2 and tVOC
+    char s[5];                      // string to be printed
 
     // Get last values of CO2 and tVOC
     pthread_mutex_lock(&mutex_data);
@@ -141,12 +140,12 @@ void draw_information() {
 
     acquire_screen();
 
-    // Print of last CO2 value
+    // Print on screen the CO2 value
     sprintf(s, "%i", c_CO2);
     textout_ex(screen, font, "     ", SXT_CO2, SYT_SCURRENT, 0, 0);
     textout_ex(screen, font, s, SXT_CO2, SYT_SCURRENT, TEXT_COLOR, 0);
 
-    // Print of last CO2 value
+    // Print on screen the tVOC value
     sprintf(s, "%i", c_tVOC);
     textout_ex(screen, font, "     ", SXT_TVOC, SYT_SCURRENT, 0, 0);
     textout_ex(screen, font, s, SXT_TVOC, SYT_SCURRENT, TEXT_COLOR, 0);
@@ -154,111 +153,128 @@ void draw_information() {
     release_screen();
 }
 
-/*
- * TODO: Add an explanation of the function
- */
-void draw_image(unsigned int *last_draw) {
+/* Shift image one line at bottom */
+void shift_to_bottom() {
+    int size = (GRAPH_ELEMENT - 1) * (int)EL_H; // Image height without last row
+    BITMAP *image_bmp = create_bitmap(EL_W, size); // image without last row
+    BITMAP *row_bmp;                               // row to be cleared
 
-    const unsigned int e_height =
-        (unsigned int)(IMAGE_HEIGHT - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT;
-    const unsigned int e_width = IMAGE_WIDTH - INTERNAL_MARGIN * 2;
-    int x, y;
-    uint32_t color;
-    int size = (GRAPH_ELEMENT - 1) * e_height;
-    BITMAP *image_bmp = create_bitmap(e_width, size);
-    BITMAP *row_bmp;
+    // store image without last row
+    blit(screen, image_bmp, IMG_XT, IMG_YT, 0, 0, EL_W, size);
+
+    // replace image with stored image one line at bottom
+    blit(image_bmp, screen, 0, 0, IMG_XT, IMG_YT + (int)EL_H, EL_W, size);
+
+    // clear first row of image with background color
+    row_bmp = create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, (int)EL_H - 1);
+    clear_bitmap(row_bmp);
+}
+
+/* Displays the last values ​​not yet printed on the screen. */
+void draw_image(unsigned int *last_draw) {
+    uint32_t f_color; // background of rectangle that represent one element
 
     acquire_screen();
     pthread_mutex_lock(&mutex_data);
 
+    // Draws the elements that are not drawn yet
     for (; *last_draw != (r_data.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT;
          *last_draw = (++(*last_draw)) % GRAPH_ELEMENT) {
-        x = IMAGE_X2 + INTERNAL_MARGIN;
-        y = IMAGE_Y2 + INTERNAL_MARGIN;
 
-        blit(screen, image_bmp, x, y, 0, 0, e_width, size);
+        // Shift image one line at bottom
+        shift_to_bottom();
 
-        blit(image_bmp, screen, 0, 0, x, y + e_height, e_width, size);
+        // Compute color according values sampled from sensor
+        f_color = ((uint32_t)(r_data.co2[*last_draw]) << 16) |
+                  r_data.tvoc[*last_draw];
 
-        row_bmp = create_sub_bitmap(screen, x, y, e_width, e_height - 1);
-        clear_bitmap(row_bmp);
-
-        color = ((uint32_t)(r_data.co2[*last_draw]) << 16) |
-                r_data.tvoc[*last_draw];
-
-        rectfill(screen, x, y, x + e_width - 1, y + e_height - 1, color);
+        // Draw new rectangle colored with the new value
+        rectfill(screen, IMG_XT, IMG_YT, IMG_XT + EL_W - 1,
+                 IMG_YT + (int)EL_H - 1, f_color);
     }
     pthread_mutex_unlock(&mutex_data);
     release_screen();
 }
 
+/* Save image to file, the directory is the one previously created */
 void save_image(int index_image) {
-    PALETTE pal;                        // color palette
-    char str[80];                       // name of file to save
-    int x = IMAGE_X2 + INTERNAL_MARGIN; // x top corner where image starts
-    int y = IMAGE_Y2 + INTERNAL_MARGIN; // y top corner where image starts
+    PALETTE pal;  // color palette
+    char str[80]; // name of file to save
 
-    const unsigned int e_height =
-        (unsigned int)(IMAGE_HEIGHT - INTERNAL_MARGIN * 2) /
-        GRAPH_ELEMENT; // height of each element of the queue
+    const unsigned int h = GRAPH_ELEMENT * (int)EL_H; // Height of image to save
 
-    const unsigned int h = GRAPH_ELEMENT * e_height; // height of image to save
-
-    const unsigned int w =
-        IMAGE_WIDTH - INTERNAL_MARGIN * 2; // width in pixel of image
     acquire_screen();
-    BITMAP *image_bmp = create_sub_bitmap(screen, x, y, w, h);
+
+    // Create reference to image to be saved
+    BITMAP *image_bmp = create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, h);
     get_palette(pal);
 
-    // name of image to be saved and save it to bmp file
-
+    // File name of image to be saved
     pthread_mutex_lock(&mutex_keyboard);
     sprintf(str, "%s%s/image_%04i.bmp", PATH_I_NN, keyboard_buf, index_image);
     pthread_mutex_unlock(&mutex_keyboard);
-    
+
+    // Save bitmap to file
     save_bmp(str, image_bmp, pal);
     release_screen();
 }
 
-void *store_image_task(void *period) {
-    struct timespec t;
-
-    unsigned int index_image = 0; // counter of image saved
-
-    set_activation(&t, *((int *)period));
-
-    while (1) {
-        save_image(index_image++);
-
-        wait_for_activation(&t, *((int *)period));
-    }
-}
-
+/* Draw current keyboard mode and text acquired from it */
 void draw_text() {
     char *txt_mode[] = {"WRITING: ", "SAVING:  "};
+    // Offset among X axis for printing text input
+    int x_off = strlen(txt_mode[0]) * 8;
+
     pthread_mutex_lock(&mutex_keyboard);
+
+    // Print current mode
     textout_ex(screen, font, txt_mode[act_mode], TEXT_X1, TEXT_Y1, MAIN_COLOR,
                BKG_COLOR);
-    textout_ex(screen, font, keyboard_buf, TEXT_X1 + 80, TEXT_Y1, TEXT_COLOR,
+
+    // Print text acquired from keyboard
+    textout_ex(screen, font, keyboard_buf, TEXT_X1 + x_off, TEXT_Y1, TEXT_COLOR,
                BKG_COLOR);
     pthread_mutex_unlock(&mutex_keyboard);
 }
 
+/* Periodic task manually activated for images storing in specific directory
+ * created in writing mode. */
+void *store_image_task(void *period) {
+    struct timespec t;
+    unsigned int index_image = 0; // Counter of saved images
+
+    set_activation(&t, *((int *)period));
+
+    while (1) {
+        // Save image in its directory
+        save_image(index_image++);
+        wait_for_activation(&t, *((int *)period));
+    }
+}
+
+/* Periodic task for the drawing of image, graph, information sampled from
+ * sensor and text acquried from keyboard */
 void *graphic_task(void *period) {
     struct timespec t;
-    unsigned int ld_image = 0;
-    unsigned int ld_graph = 0;
+    unsigned int ld_image = 0; // Index of last drawn element into image section
+    unsigned int ld_graph = 0; // Index of last drawn element into graph section
 
     set_activation(&t, *((int *)period));
 
     draw_background();
 
     while (1) {
+        // Prints into graph the element sampled that are not printed yet
         draw_graphic(&ld_graph);
-        draw_information();
-        draw_image(&ld_image);
-        draw_text();
 
+        // Prints current informations sampled from sensor
+        draw_information();
+
+        // Prints into image the element sampled that are not printed yet
+        draw_image(&ld_image);
+
+        // Prints text acquired from keyboard
+        draw_text();
         wait_for_activation(&t, *((int *)period));
     }
 
