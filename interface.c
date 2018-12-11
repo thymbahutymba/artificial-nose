@@ -88,7 +88,7 @@ void clear_graph() {
 
 /* Drawing of both graphs tVOC and CO2 that represents the last GRAPH_ELEMENT
  * values that were sampled by sensor. */
-void draw_graphic(unsigned int *last_draw) {
+void draw_graph(unsigned int *last_draw) {
     // Location of x axis on the screen
     const unsigned int base = GRAPH_Y1 - INTERNAL_MARGIN;
     unsigned int n_co2_1, n_tvoc_1; // normalized value of line start point
@@ -265,7 +265,7 @@ void *graphic_task(void *period) {
 
     while (1) {
         // Prints into graph the element sampled that are not printed yet
-        draw_graphic(&ld_graph);
+        draw_graph(&ld_graph);
 
         // Prints current informations sampled from sensor
         draw_information();
