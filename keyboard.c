@@ -11,6 +11,7 @@ void *keyboard_task(void *period) {
     char scan, ascii;
     unsigned int i_key = 0; // last char inserted in buffer
     char path2save[BUFFER_SIZE];
+    Task t_img = {-1, store_image_task, 20, 500};
 
     pthread_mutex_init(&mutex_keyboard, NULL);
     install_keyboard();
@@ -30,9 +31,11 @@ void *keyboard_task(void *period) {
             if (act_mode == SAVING) {
                 sprintf(keyboard_buf, "%*s", BUFFER_SIZE - 1, " ");
                 i_key = 0;
+                pthread_cancel(t_img.id);
             } else {
                 sprintf(path2save, "%s%s", PATH_I_NN, keyboard_buf);
                 mkdir(path2save, 0755);
+                task_create(&t_img);
             }
             act_mode = (act_mode == SAVING) ? WRITING : SAVING;
         };

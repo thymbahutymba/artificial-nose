@@ -1,16 +1,17 @@
 #include "interface.h"
+#include "keyboard.h"
+#include "neural_network.h"
 #include "ptask.h"
 #include "sensor.h"
-#include "keyboard.h"
 
 int main() {
     int index;
 
     Task task_table[] = {{-1, read_from_sensor_task, 25, 300},
-                         {-1, graphic_task, 20, 20},
-                         {-1, neural_network_task, 20, 30},
+                         {-1, graphic_task, 30, 20},
+                         /*{-1, neural_network_task, 20, 30},*/
                          /*{-1, store_image_task, 20, 500},*/
-                         {-1, keyboard_task, 20, 20}};
+                         {-1, keyboard_task, 30, 15}};
     const int n_task = sizeof(task_table) / sizeof(Task);
 
     pthread_mutex_init(&mutex_data, NULL);

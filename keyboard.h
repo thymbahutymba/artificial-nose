@@ -2,6 +2,7 @@
 #define KEYBOARD_H
 
 #include "ptask.h"
+#include "interface.h"
 #include <allegro.h>
 #include <pthread.h>
 #include <stdio.h>

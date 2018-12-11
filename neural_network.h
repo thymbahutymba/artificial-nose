@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <tensorflow/c/c_api.h>
-
 #include "keyboard.h"
 #include "ptask.h"
 

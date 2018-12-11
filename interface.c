@@ -211,7 +211,11 @@ void save_image(int index_image) {
     get_palette(pal);
 
     // name of image to be saved and save it to bmp file
-    sprintf(str, "/tmp/image_neural_network/image_%08i.bmp", index_image);
+
+    pthread_mutex_lock(&mutex_keyboard);
+    sprintf(str, "%s%s/image_%04i.bmp", PATH_I_NN, keyboard_buf, index_image);
+    pthread_mutex_unlock(&mutex_keyboard);
+    
     save_bmp(str, image_bmp, pal);
     release_screen();
 }

@@ -24,7 +24,7 @@ TF_Buffer *read_file(const char *file) {
 
 // import the graph in the main graph
 void import_graph(TF_Graph *graph) {
-    TF_Buffer *graph_def = read_file("/tmp/output_graph.pb");
+    TF_Buffer *graph_def = read_file("output_graph.pb");
 
     TF_Status *status = TF_NewStatus();
     TF_ImportGraphDefOptions *opts = TF_NewImportGraphDefOptions();
@@ -33,7 +33,7 @@ void import_graph(TF_Graph *graph) {
     // check status
     if (TF_GetCode(status) != TF_OK) {
         fprintf(stderr, "ERROR: Unable to import graph %s", TF_Message(status));
-        return 1;
+        return;
     }
 
     fprintf(stdout, "Successfully imported graph");
@@ -47,7 +47,7 @@ void *neural_network_task(void *period) {
 
     set_activation(&t, *(int *)period);
 
-    import_graph(&graph);
+    import_graph(graph);
 
     while (1) {
 
