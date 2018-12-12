@@ -7,7 +7,7 @@
 int main() {
     int index;
 
-    Task task_table[] = {{-1, read_from_sensor_task, 25, 300},
+    Task task_table[] = {{-1, simulate_sensor_task, 25, 300},
                          {-1, graphic_task, 30, 20},
                          /*{-1, neural_network_task, 20, 30},*/
                          /*{-1, store_image_task, 20, 500},*/

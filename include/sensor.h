@@ -6,9 +6,9 @@
 #include <termios.h>
 //#include <stdint.h>
 
-#define RANGE (256)
-#define BOTTOM_LIMIT (0 + RANGE)
-#define UPPER_LIMIT ((65536) - RANGE)
+#define RANGE (1024)
+#define BOTTOM_LIMIT (0)
+#define UPPER_LIMIT (65536)
 
 void *simulate_sensor_task();
 void *read_from_sensor_task();

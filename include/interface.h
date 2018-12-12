@@ -46,6 +46,7 @@
 // Height and width of the rectangle that represents a single element
 #define EL_W (IMAGE_WIDTH - INTERNAL_MARGIN * 2)
 #define EL_H ((IMAGE_HEIGHT - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT)
+#define ACT_IMG_H ((int)EL_H * GRAPH_ELEMENT) // Actual image height
 
 /*******************************************************************************
  * SUBBOX

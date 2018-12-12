@@ -47,27 +47,24 @@ void *read_from_sensor_task(void *period) {
         wait_for_activation(&t, *((int *)period));
     }
 }
-/*
-void *simulate_sensor_task() {
+
+void *simulate_sensor_task(void *period) {
     struct timespec t;
-    int period = 150;
 
     set_activation(&t, *((int *)period));
 
-    const uint16_t v_rif_1 = 4000;
-
-    const uint16_t v_rif_2 = 10000;
+    const uint16_t v_rif_1 = 35000;
+    const uint16_t v_rif_2 = 19000;
 
     init_queue();
 
     while (1) {
         pthread_mutex_lock(&mutex_data);
-        r_data.co2[r_data.top] = v_rif_1 + (rand() % (2 * RANGE));
-        r_data.tvoc[r_data.top] = v_rif_2 + (rand() % (2 * RANGE));
+        r_data.co2[r_data.top] = v_rif_1 + (rand() % (RANGE));
+        r_data.tvoc[r_data.top] = v_rif_2 + (rand() % (RANGE));
         r_data.top = ++r_data.top % GRAPH_ELEMENT;
         pthread_mutex_unlock(&mutex_data);
 
         wait_for_activation(&t, *((int *)period));
     }
 }
-*/
