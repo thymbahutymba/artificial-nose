@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <loadpng.h>
 
 #define SCREEN_WIDTH (1024)     // width of the window
 #define SCREEN_HEIGHT (768)     // height of the window
@@ -131,6 +132,8 @@ typedef struct {
 
 Queue r_data; // data readed by sensor and printed by graphich task
 pthread_mutex_t mutex_data;
+
+BITMAP *image;
 
 void *graphic_task();
 void *store_image_task();

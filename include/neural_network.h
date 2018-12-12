@@ -6,6 +6,7 @@
 #include <tensorflow/c/c_api.h>
 #include "keyboard.h"
 #include "ptask.h"
+#include "interface.h"
 
 void *neural_network_task(void *);
 

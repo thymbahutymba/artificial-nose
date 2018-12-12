@@ -1,5 +1,4 @@
 CC = gcc
-ALLEGRO =  `allegro-config --libs`
 BIN = main
 
 SRC_DIR = src
@@ -9,13 +8,13 @@ INC_DIR = include
 SRC = $(wildcard $(SRC_DIR)/*.c)
 OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-LDFLAGS = -pthread -lrt -ltensorflow
+LDFLAGS = -pthread -lrt -ltensorflow -lloadpng -lpng -lz -lalleg
 CFLAGS = -Wall -Wextra -I$(INC_DIR)
 
 all: $(BIN)
 
 $(BIN): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(ALLEGRO)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
 	$(CC) -c $(CFLAGS) $< -o $@

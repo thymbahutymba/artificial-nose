@@ -44,12 +44,30 @@ void import_graph(TF_Graph *graph) {
 void *neural_network_task(void *period) {
     struct timespec t;
     TF_Graph *graph = TF_NewGraph();
+    unsigned int data[EL_W * ACT_IMG_H];
+    ssize_t x;
+    ssize_t line;
+    BITMAP *buf = create_bitmap(EL_W, ACT_IMG_H);
 
     set_activation(&t, *(int *)period);
 
     import_graph(graph);
 
     while (1) {
+        acquire_bitmap(image);
+
+        // For each line in bitmap
+        for (line = 0; line < buf->h; ++line)
+            for (x = 0; x < buf->w; ++x)
+                data[line * image->h + x] =
+                    ((unsigned int *)image->line[line])[x];
+
+        /*for (line = 0; line < buf->h; ++line)
+            for (x = 0; x < buf->w; ++x)
+                ((unsigned int *)buf->line[line])[x] =
+                    data[line * image->h + x];
+        */
+        release_bitmap(image);
 
         // use neural network
 
