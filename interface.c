@@ -103,7 +103,7 @@ void draw_graph(unsigned int *last_draw) {
         /* Compute the normalized values. These values are two in order to draw
          * a line that joins both points. */
         norm_cord(*last_draw, &n_co2_1, &n_tvoc_1);
-        norm_cord(*last_draw, &n_co2_2, &n_tvoc_2);
+        norm_cord(*last_draw + 1, &n_co2_2, &n_tvoc_2);
 
         acquire_screen();
         /* Drawing of the line for CO2 graph that joins the two points that
