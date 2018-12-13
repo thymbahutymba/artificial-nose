@@ -63,29 +63,30 @@ TF_Code run_session(TF_Graph *graph, TF_Status *status, unsigned short *data) {
 
     TF_Output input_op = {TF_GraphOperationByName(graph, IN_NAME), 0};
 
-    TF_Tensor *input_tensor[] = {TF_NewTensor(TF_UINT16, in_dims, n_in_dims,
-                                              data, nb_in, &Deallocator, 0)};
+    TF_Tensor *input_tensor = TF_NewTensor(TF_UINT16, in_dims, n_in_dims, data,
+                                           nb_in, &Deallocator, 0);
 
     TF_Output output = {TF_GraphOperationByName(graph, OUT_NAME), 0};
 
-    TF_Tensor *output_values[] = {
-        TF_AllocateTensor(TF_FLOAT, out_dims, n_out_dims, nb_out)};
+    TF_Tensor *output_values =
+        TF_AllocateTensor(TF_FLOAT, out_dims, n_out_dims, nb_out);
 
     TF_SessionOptions *sess_opts = TF_NewSessionOptions();
     TF_Session *session = TF_NewSession(graph, sess_opts, status);
 
     TF_SessionRun(session,
-                  NULL,                           // Run options
-                  &input_op, &input_tensor[0], 1, // in: tensor, values, number
-                  &output, &output_values[0], 1,  // out: tensor, vlaues, number
-                  NULL, 0, // target operation, num targets
-                  NULL,    // metadata
-                  status   // outputs status
+                  NULL,                        // Run options
+                  &input_op, &input_tensor, 1, // in: tensor, values, number
+                  &output, &output_values, 1,  // out: tensor, vlaues, number
+                  NULL, 0,                     // target operation, num targets
+                  NULL,                        // metadata
+                  status                       // outputs status
     );
 
     // result = (float *)TF_TensorData(output_values);
     // printf("%f %f %f\n", result[0], result[1], result[2]);
 
+    printf("%s\n", TF_Message(status));
     return TF_GetCode(status);
 }
 
@@ -132,7 +133,7 @@ void *neural_network_task(void *period) {
     while (1) {
         image_linearization(data);
 
-        printf("%i\n", run_session(graph, status, data));
+        printf("%i %s\n", run_session(graph, status, data), TF_Message(status));
         wait_for_activation(&t, *(int *)period);
     }
 }
