@@ -163,7 +163,7 @@ void shift_to_bottom() {
     blit(screen, img_bmp, IMG_XT, IMG_YT, 0, 0, EL_W, size);
 
     // Replace image with stored image that not contains anymore last row
-    blit(img_bmp, screen, 0, 0, 0, IMG_XT, IMG_YT, size);
+    blit(img_bmp, screen, 0, 0, IMG_XT, IMG_YT + (int)EL_H, EL_W, size);
 
     // clear the firt line of the image
     row_bmp = create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, (int)EL_H - 1);
@@ -293,5 +293,5 @@ void *graphic_task(void *period) {
         wait_for_activation(&t, *((int *)period));
     }
 
-    //allegro_exit();
+    // allegro_exit();
 }
