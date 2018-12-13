@@ -156,24 +156,22 @@ void draw_information() {
 /* Shift image one line at bottom */
 void shift_to_bottom() {
     int size = (GRAPH_ELEMENT - 1) * (int)EL_H; // Image height without last row
-    BITMAP *img_buf = create_bitmap(EL_W, size); // image without last row
-
-    acquire_bitmap(image);
+    BITMAP *img_bmp = create_bitmap(EL_W, size); // image without last row
+    BITMAP *row_bmp;
 
     // Store image without last row
-    blit(image, img_buf, 0, 0, 0, 0, EL_W, size);
+    blit(screen, img_bmp, IMG_XT, IMG_YT, 0, 0, EL_W, size);
 
     // Replace image with stored image that not contains anymore last row
-    blit(img_buf, image, 0, 0, 0, (int)EL_H, EL_W, size);
+    blit(img_bmp, screen, 0, 0, 0, IMG_XT, IMG_YT, size);
 
-    release_bitmap(image);
-
-    // Destroy the buffer bitmap previously allocated
-    destroy_bitmap(img_buf);
+    // clear the firt line of the image
+    row_bmp = create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, (int)EL_H - 1);
+    clear_bitmap(row_bmp);
 }
 
 /* Clean up section that contains image */
-void cu_img_section() {
+/*void cu_img_section() {
     acquire_screen();
 
     // Create bitmap which refers to image section
@@ -187,7 +185,7 @@ void cu_img_section() {
     // Destroy the image section bitmap previously allocated
     destroy_bitmap(img_sec);
 }
-
+*/
 /* Displays the last values ​​not yet printed on the screen. */
 void draw_image(unsigned int *last_draw) {
     uint32_t f_color; // background of rectangle that represent one element
@@ -207,15 +205,8 @@ void draw_image(unsigned int *last_draw) {
         shift_to_bottom();
 
         // Draw new rectangle colored with the new value
-        acquire_bitmap(image);
-        rectfill(image, 0, 0, EL_W - 1, (int)EL_H - 1, f_color);
-
-        // Clean section that contains image before draw on it
-        cu_img_section();
-
-        set_alpha_blender();
-        draw_trans_sprite(screen, image, IMG_XT, IMG_YT);
-        release_bitmap(image);
+        rectfill(screen, IMG_XT, IMG_YT, IMG_XT + EL_W - 1,
+                 IMG_YT + (int)EL_H - 1, f_color);
     }
     pthread_mutex_unlock(&mutex_data);
     release_screen();
@@ -226,17 +217,21 @@ void save_image(int index_image) {
     PALETTE pal;  // color palette
     char str[80]; // name of file to save
 
+    acquire_screen();
+
+    BITMAP *image_bmp =
+        create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, ACT_IMG_H);
+
     get_palette(pal);
 
     // File name of image to be saved
     pthread_mutex_lock(&mutex_keyboard);
-    sprintf(str, "%s%s/image_%04i.png", PATH_I_NN, keyboard_buf, index_image);
+    sprintf(str, "%s%s/image_%04i.bmp", PATH_I_NN, keyboard_buf, index_image);
     pthread_mutex_unlock(&mutex_keyboard);
 
-    // Save bitmap to file in TGA format
-    acquire_bitmap(image);
-    save_png(str, image, pal);
-    release_bitmap(image);
+    save_bmp(str, image_bmp, pal);
+
+    release_screen();
 }
 
 /* Draw current keyboard mode and text acquired from it */
@@ -297,4 +292,6 @@ void *graphic_task(void *period) {
         draw_text();
         wait_for_activation(&t, *((int *)period));
     }
+
+    //allegro_exit();
 }
