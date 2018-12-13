@@ -198,15 +198,17 @@ void draw_image(unsigned int *last_draw) {
          *last_draw = (++(*last_draw)) % GRAPH_ELEMENT) {
 
         // Compute color according values sampled from sensor
-        f_color = ((uint32_t)(r_data.co2[*last_draw]) << 16) |
+        /*f_color = ((uint32_t)(r_data.co2[*last_draw]) << 16) |
                   r_data.tvoc[*last_draw];
-
+*/
         // Shift image one line at bottom
         shift_to_bottom();
 
         // Draw new rectangle colored with the new value
-        rectfill(screen, IMG_XT, IMG_YT, IMG_XT + EL_W - 1,
-                 IMG_YT + (int)EL_H - 1, f_color);
+        rectfill(screen, IMG_XT, IMG_YT, IMG_XT + (EL_W - 1) / 2,
+                 IMG_YT + (int)EL_H - 1, r_data.co2[*last_draw]);
+        rectfill(screen, IMG_XT + (EL_W - 1) / 2, IMG_YT, IMG_XT + EL_W - 1,
+                 IMG_YT + (int)EL_H - 1, r_data.tvoc[*last_draw]);
     }
     pthread_mutex_unlock(&mutex_data);
     release_screen();
