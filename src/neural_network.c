@@ -4,6 +4,9 @@
 #define IN_NAME ("Placeholder")
 #define OUT_NAME ("final_result")
 
+// Change this or array data with less useless name
+typedef unsigned int data_t;
+
 void free_buffer(void *data, size_t length) { free(data); }
 
 /* Read file containing the graph of the neural network and initialize the
@@ -44,11 +47,11 @@ void import_graph(TF_Graph *graph, TF_Status *status) {
 
 static void Deallocator(void *data, size_t length, void *arg) {}
 
-TF_Code run_session(TF_Graph *graph, TF_Status *status, unsigned short *data) {
+TF_Code run_session(TF_Graph *graph, TF_Status *status, data_t *data) {
     float *result;
 
     // Number of bytes of input
-    const int nb_in = EL_W * ACT_IMG_H * sizeof(unsigned short);
+    const int nb_in = EL_W * ACT_IMG_H * sizeof(data_t);
 
     // Number of bytes of output
     const int nb_out = 3 * sizeof(float);
@@ -63,7 +66,7 @@ TF_Code run_session(TF_Graph *graph, TF_Status *status, unsigned short *data) {
 
     TF_Output input_op = {TF_GraphOperationByName(graph, IN_NAME), 0};
 
-    TF_Tensor *input_tensor = TF_NewTensor(TF_UINT16, in_dims, n_in_dims, data,
+    TF_Tensor *input_tensor = TF_NewTensor(TF_FLOAT, in_dims, n_in_dims, data,
                                            nb_in, &Deallocator, 0);
 
     TF_Output output = {TF_GraphOperationByName(graph, OUT_NAME), 0};
@@ -90,7 +93,7 @@ TF_Code run_session(TF_Graph *graph, TF_Status *status, unsigned short *data) {
     return TF_GetCode(status);
 }
 
-void image_linearization(unsigned short *data) {
+void image_linearization(data_t *data) {
     BITMAP *image;
     acquire_screen();
     image = create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, ACT_IMG_H);
@@ -100,7 +103,7 @@ void image_linearization(unsigned short *data) {
 
     for (line = 0; line < image->h; ++line)
         for (x = 0; x < image->w; ++x) {
-            data[line * image->h + x] = ((short *)image->line[line])[x];
+            data[line * image->h + x] = ((data_t *)image->line[line])[x];
         }
 
     destroy_bitmap(image);
@@ -109,7 +112,7 @@ void image_linearization(unsigned short *data) {
 
 void *neural_network_task(void *period) {
     struct timespec t;
-    unsigned short data[EL_W * ACT_IMG_H];
+    data_t data[EL_W * ACT_IMG_H];
 
     TF_Graph *graph = TF_NewGraph();
     TF_Status *status = TF_NewStatus();
@@ -133,7 +136,8 @@ void *neural_network_task(void *period) {
     while (1) {
         image_linearization(data);
 
-        printf("%i %s\n", run_session(graph, status, data), TF_Message(status));
+        printf("%i %s\n", run_session(graph, status, data));
+        // TF_Message(status));
         wait_for_activation(&t, *(int *)period);
     }
 }
