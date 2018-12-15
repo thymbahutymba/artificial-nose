@@ -2,6 +2,7 @@
 #define INTERFACE_H
 
 #include "keyboard.h"
+#include "neural_network.h"
 #include "ptask.h"
 #include "sensor.h"
 #include <allegro.h>
@@ -9,16 +10,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define SCREEN_WIDTH (1024)     // width of the window
-#define SCREEN_HEIGHT (768)     // height of the window
-#define EXTERNAL_MARGIN (5)     // space between sections borders
-#define INTERNAL_MARGIN (8)     // internal section space
+#define SCREEN_WIDTH (1024)               // width of the window
+#define SCREEN_HEIGHT (768)               // height of the window
+#define EXTERNAL_MARGIN (5)               // space between sections borders
+#define INTERNAL_MARGIN (8)               // internal section space
 #define BORDER_COLOR (0b1111111111100000) // yellow color for border section
 #define MAIN_COLOR (0b1111100000000000)   // red for title
 #define TEXT_COLOR (0b1111111111111111)   // white for text color
 #define GRAPH1_COLOR (0b1111100000000000) // red for CO2 graph
 #define GRAPH2_COLOR (0b0000011111100000) // green for tVOC gragh
 #define BKG_COLOR (0b0000000000000000)    // black for background
+#define LINE_SPACE (12)                   // space between each line of text
 
 // Sets the pixel color format to be used
 #define COLOR_MODE (16)
@@ -104,6 +106,9 @@
 #define RESULT_X2 (INPUT_X2)
 #define RESULT_Y2 (IMAGE_Y2 - EXTERNAL_MARGIN) // GRAPH_Y2-EXTERNAL_MARGIN
 
+#define RTEXT_X (RESULT_X1 + INTERNAL_MARGIN)
+#define RTEXT_Y (RESULT_Y1 + INTERNAL_MARGIN)
+
 /*******************************************************************************
  * LEGEND
  ******************************************************************************/
@@ -117,7 +122,6 @@
 // Coordinates that represents the alignment of text in legend
 #define LTEXT_X (LEGEND_X1 + INTERNAL_MARGIN)
 #define LTEXT_Y (LEGEND_Y1 + INTERNAL_MARGIN)
-#define LINE_SPACE (12) // space between each line of text
 
 /*******************************************************************************
  * DEFINITION AND DECLARATION

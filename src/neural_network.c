@@ -40,13 +40,11 @@ void import_graph(TF_Graph *graph, TF_Status *status) {
 
 static void Deallocator(void *data, size_t length, void *arg) {}
 
-TF_Code run_session(TF_Graph *graph, TF_Status *status, data_t *data) {
-    float *result;
-
+void run_session(TF_Graph *graph, TF_Status *status, img_t *data) {
     // Number of bytes of input
-    const unsigned int nb_in = ARRAY_SIZE * sizeof(data_t);
+    const unsigned int nb_in = ARRAY_SIZE * sizeof(img_t);
 
-    // Number of bytes of output 
+    // Number of bytes of output
     /********** CHANGE THIS 3 WITH THE NUMBER OF LABELS READED FROM FILE ******/
     const int nb_out = 3 * sizeof(float);
 
@@ -81,14 +79,12 @@ TF_Code run_session(TF_Graph *graph, TF_Status *status, data_t *data) {
                   status                       // outputs status
     );
 
+    pthread_mutex_lock(&mutex_res);
     result = TF_TensorData(output_values);
-    printf("%f %f %f\n", result[0], result[1], result[2]);
-
-    printf("%s\n", TF_Message(status));
-    return TF_GetCode(status);
+    pthread_mutex_unlock(&mutex_res);
 }
 
-void image_linearization(data_t *data) {
+void image_linearization(img_t *data) {
     BITMAP *image;
     acquire_screen();
     image = create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, ACT_IMG_H);
@@ -98,7 +94,8 @@ void image_linearization(data_t *data) {
 
     for (line = 0; line < image->h; ++line)
         for (x = 0; x < image->w; ++x) {
-            data[line * image->h + x] = ((data_t *)image->line[line])[x];
+            data[line * image->h + x] =
+                ((img_t *)image->line[line])[x] / (2 ^ 16);
         }
 
     destroy_bitmap(image);
@@ -107,7 +104,7 @@ void image_linearization(data_t *data) {
 
 void *neural_network_task(void *period) {
     struct timespec t;
-    data_t data[EL_W * ACT_IMG_H * 3];
+    img_t data[EL_W * ACT_IMG_H * 3];
 
     TF_Graph *graph = TF_NewGraph();
     TF_Status *status = TF_NewStatus();
@@ -119,7 +116,7 @@ void *neural_network_task(void *period) {
     while (1) {
         image_linearization(data);
 
-        printf("%i %s\n", run_session(graph, status, data));
+        run_session(graph, status, data);
         wait_for_activation(&t, *(int *)period);
     }
 }

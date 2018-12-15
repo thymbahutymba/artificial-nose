@@ -15,6 +15,7 @@ int main() {
     const int n_task = sizeof(task_table) / sizeof(Task);
 
     pthread_mutex_init(&mutex_data, NULL);
+    pthread_mutex_init(&mutex_res, NULL);
 
     mkdir(PATH_I_NN, 0755);
     init_interface();

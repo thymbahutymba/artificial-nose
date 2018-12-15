@@ -170,22 +170,6 @@ void shift_to_bottom() {
     clear_bitmap(row_bmp);
 }
 
-/* Clean up section that contains image */
-/*void cu_img_section() {
-    acquire_screen();
-
-    // Create bitmap which refers to image section
-    BITMAP *img_sec =
-        create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, ACT_IMG_H);
-
-    // Clear bitmap to color 0 (black)
-    clear_bitmap(img_sec);
-    release_screen();
-
-    // Destroy the image section bitmap previously allocated
-    destroy_bitmap(img_sec);
-}
-*/
 /* Displays the last values ​​not yet printed on the screen. */
 void draw_image(unsigned int *last_draw) {
     uint32_t f_color; // background of rectangle that represent one element
@@ -197,10 +181,6 @@ void draw_image(unsigned int *last_draw) {
     for (; *last_draw != (r_data.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT;
          *last_draw = (++(*last_draw)) % GRAPH_ELEMENT) {
 
-        // Compute color according values sampled from sensor
-        /*f_color = ((uint32_t)(r_data.co2[*last_draw]) << 16) |
-                  r_data.tvoc[*last_draw];
-*/
         // Shift image one line at bottom
         shift_to_bottom();
 
@@ -254,6 +234,24 @@ void draw_text() {
     pthread_mutex_unlock(&mutex_keyboard);
 }
 
+void draw_results() {
+    size_t i;
+    char *const labels[] = {"Aglio:\t%f", "Cipolla:\t%f", "Uova:\t%f"};
+    char msg[BUFFER_SIZE];
+    const int n_lab = sizeof(labels) / sizeof(char *);
+
+    pthread_mutex_lock(&mutex_res);
+
+    if (result == NULL) return;
+
+    for (i = 0; i < n_lab; ++i) {
+        sprintf(msg, labels[i], result[i]);
+        textout_ex(screen, font, labels[i], RTEXT_X, RTEXT_Y + LINE_SPACE * i,
+                   TEXT_COLOR, BKG_COLOR);
+    }
+    pthread_mutex_unlock(&mutex_res);
+}
+
 /* Periodic task manually activated for images storing in specific directory
  * created in writing mode. */
 void *store_image_task(void *period) {
@@ -291,7 +289,9 @@ void *graphic_task(void *period) {
         draw_image(&ld_image);
 
         // Prints text acquired from keyboard
-        draw_text();
+        // draw_text();
+
+        draw_results();
         wait_for_activation(&t, *((int *)period));
     }
 
