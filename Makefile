@@ -8,7 +8,7 @@ INC_DIR = include
 SRC = $(wildcard $(SRC_DIR)/*.c)
 OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-LDFLAGS = -pthread -lrt -ltensorflow -lloadpng -lpng -lz -lalleg
+LDFLAGS = -pthread -lrt -ltensorflow -lalleg
 CFLAGS = -Wall -Wextra -I$(INC_DIR)
 
 all: $(BIN)

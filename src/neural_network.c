@@ -1,12 +1,5 @@
 #include "neural_network.h"
 
-#define GRAPH_NAME ("retrained_graph.pb")
-#define IN_NAME ("Placeholder")
-#define OUT_NAME ("final_result")
-
-// Change this or array data with less useless name
-typedef unsigned int data_t;
-
 void free_buffer(void *data, size_t length) { free(data); }
 
 /* Read file containing the graph of the neural network and initialize the
@@ -51,16 +44,18 @@ TF_Code run_session(TF_Graph *graph, TF_Status *status, data_t *data) {
     float *result;
 
     // Number of bytes of input
-    const int nb_in = EL_W * ACT_IMG_H * sizeof(data_t);
+    const unsigned int nb_in = ARRAY_SIZE * sizeof(data_t);
 
-    // Number of bytes of output
+    // Number of bytes of output 
+    /********** CHANGE THIS 3 WITH THE NUMBER OF LABELS READED FROM FILE ******/
     const int nb_out = 3 * sizeof(float);
 
     // Input dimensions
-    int64_t in_dims[] = {1, EL_W, ACT_IMG_H};
+    int64_t in_dims[] = {1, EL_W, ACT_IMG_H, CHANNELS};
     int n_in_dims = sizeof(in_dims) / sizeof(int64_t);
 
     // Output dimensions
+    /********** CHANGE THIS 3 WITH THE NUMBER OF LABELS READED FROM FILE ******/
     int64_t out_dims[] = {1, 3};
     int n_out_dims = sizeof(out_dims) / sizeof(int64_t);
 
@@ -86,8 +81,8 @@ TF_Code run_session(TF_Graph *graph, TF_Status *status, data_t *data) {
                   status                       // outputs status
     );
 
-    // result = (float *)TF_TensorData(output_values);
-    // printf("%f %f %f\n", result[0], result[1], result[2]);
+    result = TF_TensorData(output_values);
+    printf("%f %f %f\n", result[0], result[1], result[2]);
 
     printf("%s\n", TF_Message(status));
     return TF_GetCode(status);
@@ -112,7 +107,7 @@ void image_linearization(data_t *data) {
 
 void *neural_network_task(void *period) {
     struct timespec t;
-    data_t data[EL_W * ACT_IMG_H];
+    data_t data[EL_W * ACT_IMG_H * 3];
 
     TF_Graph *graph = TF_NewGraph();
     TF_Status *status = TF_NewStatus();
@@ -121,23 +116,10 @@ void *neural_network_task(void *period) {
 
     set_activation(&t, *(int *)period);
 
-    /*
-    TF_Operation *decode = TF_GraphOperationByName(graph, IN_NAME);
-    printf("P: %p\n", decode);
-    printf("NO: %i\n", TF_OperationNumOutputs(decode));
-    printf("NI: %i\n", TF_OperationNumInputs(decode));
-
-    decode = TF_GraphOperationByName(graph, OUT_NAME);
-    printf("P: %p\n", decode);
-    printf("NO: %i\n", TF_OperationNumOutputs(decode));
-    printf("NI: %i\n", TF_OperationNumInputs(decode));
-    */
-
     while (1) {
         image_linearization(data);
 
         printf("%i %s\n", run_session(graph, status, data));
-        // TF_Message(status));
         wait_for_activation(&t, *(int *)period);
     }
 }

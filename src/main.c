@@ -9,7 +9,7 @@ int main() {
 
     Task task_table[] = {{-1, simulate_sensor_task, 25, 300},
                          {-1, graphic_task, 30, 20},
-                         {-1, neural_network_task, 20, 30},
+                         {-1, neural_network_task, 20, 1000},
                          /*{-1, store_image_task, 20, 500},*/
                          {-1, keyboard_task, 30, 15}};
     const int n_task = sizeof(task_table) / sizeof(Task);

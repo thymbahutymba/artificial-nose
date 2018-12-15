@@ -8,7 +8,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <loadpng.h>
 
 #define SCREEN_WIDTH (1024)     // width of the window
 #define SCREEN_HEIGHT (768)     // height of the window
@@ -23,6 +22,7 @@
 
 // Sets the pixel color format to be used
 #define COLOR_MODE (16)
+#define CHANNELS (3) // RGB Image
 
 // Number of element that it's sampled by sensor
 #define GRAPH_ELEMENT (55)
