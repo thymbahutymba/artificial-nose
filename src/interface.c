@@ -236,20 +236,17 @@ void draw_text() {
 
 void draw_results() {
     size_t i;
-    char *const labels[] = {"Aglio:\t%f", "Cipolla:\t%f", "Uova:\t%f"};
     char msg[BUFFER_SIZE];
-    const int n_lab = sizeof(labels) / sizeof(char *);
 
     pthread_mutex_lock(&mutex_res);
 
-    if (result == NULL) {
-        pthread_mutex_unlock(&mutex_res);
-        return;
-    }
+    for (i = 0; i < N_LAB; ++i) {
+        if (result == NULL)
+            sprintf(msg, LABELS[i], 0);
+        else
+            sprintf(msg, LABELS[i], result[i]);
 
-    for (i = 0; i < n_lab; ++i) {
-        sprintf(msg, labels[i], result[i]);
-        textout_ex(screen, font, labels[i], RTEXT_X, RTEXT_Y + LINE_SPACE * i,
+        textout_ex(screen, font, msg, RTEXT_X, RTEXT_Y + LINE_SPACE * i,
                    TEXT_COLOR, BKG_COLOR);
     }
     pthread_mutex_unlock(&mutex_res);
@@ -292,7 +289,7 @@ void *graphic_task(void *period) {
         draw_image(&ld_image);
 
         // Prints text acquired from keyboard
-        // draw_text();
+        draw_text();
 
         draw_results();
         wait_for_activation(&t, *((int *)period));

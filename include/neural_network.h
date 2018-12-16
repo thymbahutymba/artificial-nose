@@ -13,10 +13,15 @@
 #define IN_NAME ("Placeholder")
 #define OUT_NAME ("final_result")
 
+#define N_LAB (3)
+#define LABELS ((const char *const [N_LAB]){"Aglio:   %f", \
+                                            "Cipolla: %f", \
+                                            "Uova:    %f" })
+
 #define ARRAY_SIZE (EL_W * ACT_IMG_H * CHANNELS)
 
-// Change this or array data with less useless name
-typedef float img_t;
+typedef short unsigned int img_t;
+typedef float tfdat_t; // Tensorflow data type for the array passed to tensor
 
 float *result;
 pthread_mutex_t mutex_res;

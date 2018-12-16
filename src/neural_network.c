@@ -40,21 +40,19 @@ void import_graph(TF_Graph *graph, TF_Status *status) {
 
 static void Deallocator(void *data, size_t length, void *arg) {}
 
-void run_session(TF_Graph *graph, TF_Status *status, img_t *data) {
+void run_session(TF_Graph *graph, TF_Status *status, tfdat_t *data) {
     // Number of bytes of input
-    const unsigned int nb_in = ARRAY_SIZE * sizeof(img_t);
+    const unsigned int nb_in = ARRAY_SIZE * sizeof(tfdat_t);
 
     // Number of bytes of output
-    /********** CHANGE THIS 3 WITH THE NUMBER OF LABELS READED FROM FILE ******/
-    const int nb_out = 3 * sizeof(float);
+    const int nb_out = N_LAB * sizeof(float);
 
     // Input dimensions
     int64_t in_dims[] = {1, EL_W, ACT_IMG_H, CHANNELS};
     int n_in_dims = sizeof(in_dims) / sizeof(int64_t);
 
     // Output dimensions
-    /********** CHANGE THIS 3 WITH THE NUMBER OF LABELS READED FROM FILE ******/
-    int64_t out_dims[] = {1, 3};
+    int64_t out_dims[] = {1, N_LAB};
     int n_out_dims = sizeof(out_dims) / sizeof(int64_t);
 
     TF_Output input_op = {TF_GraphOperationByName(graph, IN_NAME), 0};
@@ -79,12 +77,16 @@ void run_session(TF_Graph *graph, TF_Status *status, img_t *data) {
                   status                       // outputs status
     );
 
-    pthread_mutex_lock(&mutex_res);
-    result = TF_TensorData(output_values);
-    pthread_mutex_unlock(&mutex_res);
+    if (TF_GetCode(status) == TF_OK) {
+        pthread_mutex_lock(&mutex_res);
+        result = TF_TensorData(output_values);
+        pthread_mutex_unlock(&mutex_res);
+    } else 
+        fprintf(stderr, "%s\n", TF_Message(status));
+
 }
 
-void image_linearization(img_t *data) {
+void image_linearization(tfdat_t *data) {
     BITMAP *image;
     acquire_screen();
     image = create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, ACT_IMG_H);
@@ -94,8 +96,7 @@ void image_linearization(img_t *data) {
 
     for (line = 0; line < image->h; ++line)
         for (x = 0; x < image->w; ++x) {
-            data[line * image->h + x] =
-                ((img_t *)image->line[line])[x] / (2 ^ 16);
+            data[line * image->h + x] = (tfdat_t)((img_t *)image->line[line])[x] / (2^16);
         }
 
     destroy_bitmap(image);
@@ -104,7 +105,7 @@ void image_linearization(img_t *data) {
 
 void *neural_network_task(void *period) {
     struct timespec t;
-    img_t data[EL_W * ACT_IMG_H * 3];
+    tfdat_t data[EL_W * ACT_IMG_H * CHANNELS];
 
     TF_Graph *graph = TF_NewGraph();
     TF_Status *status = TF_NewStatus();
