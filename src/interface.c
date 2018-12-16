@@ -242,7 +242,10 @@ void draw_results() {
 
     pthread_mutex_lock(&mutex_res);
 
-    if (result == NULL) return;
+    if (result == NULL) {
+        pthread_mutex_unlock(&mutex_res);
+        return;
+    }
 
     for (i = 0; i < n_lab; ++i) {
         sprintf(msg, labels[i], result[i]);
