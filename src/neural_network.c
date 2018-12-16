@@ -81,9 +81,8 @@ void run_session(TF_Graph *graph, TF_Status *status, tfdat_t *data) {
         pthread_mutex_lock(&mutex_res);
         result = TF_TensorData(output_values);
         pthread_mutex_unlock(&mutex_res);
-    } else 
+    } else
         fprintf(stderr, "%s\n", TF_Message(status));
-
 }
 
 void image_linearization(tfdat_t *data) {
@@ -95,9 +94,9 @@ void image_linearization(tfdat_t *data) {
     ssize_t line;
 
     for (line = 0; line < image->h; ++line)
-        for (x = 0; x < image->w; ++x) {
-            data[line * image->h + x] = (tfdat_t)((img_t *)image->line[line])[x] / (2^16);
-        }
+        for (x = 0; x < image->w; ++x)
+            data[line * image->h + x] =
+                (tfdat_t)((img_t *)image->line[line])[x] / (1 << 16);
 
     destroy_bitmap(image);
     release_screen();

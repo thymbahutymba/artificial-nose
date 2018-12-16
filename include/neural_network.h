@@ -4,12 +4,13 @@
 #include "interface.h"
 #include "keyboard.h"
 #include "ptask.h"
+#include "sensor.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <tensorflow/c/c_api.h>
 
-#define GRAPH_NAME ("retrained_graph.pb")
-#define LABELS_NAME ("retrained_labels.txt")
+#define GRAPH_NAME ("new_graph.pb")
+#define LABELS_NAME ("new_labels.txt")
 #define IN_NAME ("Placeholder")
 #define OUT_NAME ("final_result")
 

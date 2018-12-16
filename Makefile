@@ -10,12 +10,12 @@ OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 ALLEGRO = `allegro-config --libs`
 LDFLAGS = -pthread -lrt -ltensorflow
-CFLAGS = -Wall -Wextra -I$(INC_DIR)
+CFLAGS += -Wall -Wextra -I$(INC_DIR)
 
 all: $(BIN)
 
 $(BIN): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(ALLEGRO)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) -lalleg
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
 	$(CC) -c $(CFLAGS) $< -o $@
@@ -23,3 +23,10 @@ $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
 clean:
 	rm $(OBJ_DIR)/*.o
 	rm main
+
+retrain:
+	python3 retrain.py \
+		--image_dir=image_neural_network \
+		--output_graph new_graph.pb \
+		--output_labels new_labels.txt \
+		--how_many_training_steps 500
