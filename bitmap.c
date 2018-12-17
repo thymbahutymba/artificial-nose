@@ -2,14 +2,35 @@
 #include <stdio.h>
 
 int main() {
-    BITMAP *img, *save;
+    // BITMAP *img, *save;
     PALETTE pal;
-    unsigned short data[444 * 440];
-    int tmp;
+    // unsigned short data[444 * 440];
+    // int tmp;
+    BITMAP *test;
+
+    int white = (1 << 16) - 1;
 
     allegro_init();
     set_color_depth(16);
-    img = load_bitmap("image_neural_network/aglio/image_0000.bmp", pal);
+
+    test = create_bitmap(2, 2);
+
+    putpixel(test, 0, 0, white);
+    putpixel(test, 0, 1, white);
+    //putpixel(test, 0, 2, white);
+
+    putpixel(test, 1, 0, 0);
+    putpixel(test, 1, 2, 0);
+    //putpixel(test, 1, 3, 0);
+
+    putpixel(test, 2, 0, white);
+    putpixel(test, 2, 1, white);
+    //putpixel(test, 2, 2, white);
+
+    get_palette(pal);
+    save_bmp("test.bmp", test, pal);
+
+    /*img = load_bitmap("image_neural_network/aglio/image_0000.bmp", pal);
     save = create_bitmap(444, 440);
     /*
     ssize_t x;
@@ -26,11 +47,11 @@ int main() {
                 ((unsigned short *)save->line[line])[x] =
                     data[line * save->w + x];
 */
-    tmp = _getpixel16(img, 0, 0);
+    /*tmp = _getpixel16(img, 0, 0);
     printf("%i %i %i\n", getr(tmp), getg(tmp), getb(tmp));
+    */
+    // get_palette(pal);
+    // save_bmp("prova.bmp", save, pal);
 
-    //get_palette(pal);
-    //save_bmp("prova.bmp", save, pal);
-
-    //printf("\n");
+    // printf("\n");
 }

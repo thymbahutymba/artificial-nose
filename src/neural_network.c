@@ -54,20 +54,7 @@ void stretch_and_linear(tfdat_t *data) {
 
     ssize_t x;
     ssize_t line;
-/*
-    // All red all green all blue for each colums
-    for (x = 0; x < str_img->w; ++x)
-        for (line = 0; line < str_img->h; ++line) {
-            int color = _getpixel16(str_img, x, line);
-            data[x * str_img->h + line] = (tfdat_t)getr16(color) / (1 << 8);
-            data[x * str_img->h + line + 1 * str_img->w * str_img->h] =
-                (tfdat_t)getg16(color) / (1 << 8);
-            data[x * str_img->h + line + 2 * str_img->w * str_img->h] =
-                (tfdat_t)getb16(color) / (1 << 8);
-        }
-*/
-    // THIS IS THE ONE THAT COULD GENERATE THE CORRECT SOLUTION
-    // AGLIO CIRCA OK, CIPOLLA NON PROPRIO, UOVA OK
+
     // All red all green all blue for each rows
     for (line = 0; line < str_img->h; ++line)
         for (x = 0; x < str_img->w; ++x) {
@@ -78,30 +65,7 @@ void stretch_and_linear(tfdat_t *data) {
             data[line * str_img->w + x + 2 * str_img->w * str_img->h] =
                 (tfdat_t)getb16(color) / (1 << 8);
         }
-/*
-    // R G B R G B for each colums
-    for (x = 0; x < str_img->w; ++x)
-        for (line = 0; line < str_img->h; ++line) {
-            int color = _getpixel16(str_img, x, line);
-            data[x * str_img->h + line * 3] = (tfdat_t)getr16(color) / (1 << 8);
-            data[x * str_img->h + line * 3 + 1] =
-                (tfdat_t)getg16(color) / (1 << 8);
-            data[x * str_img->h + line * 3 + 2] =
-                (tfdat_t)getb16(color) / (1 << 8);
-        }
 
-    // R G B R G B for each rows
-    for (line = 0; line < str_img->h; ++line)
-        for (x = 0; x < str_img->w; ++x) {
-            int color = _getpixel16(str_img, x, line);
-            data[line * str_img->w + x * 3] = (tfdat_t)getr16(color) / (1 << 8);
-            data[line * str_img->w + x * 3 + 1] =
-                (tfdat_t)getg16(color) / (1 << 8);
-            data[line * str_img->w + x * 3 + 2] =
-                (tfdat_t)getb16(color) / (1 << 8);
-        }
-*/
-    // destroy_bitmap(image);
     destroy_bitmap(str_img);
     release_screen();
 }
