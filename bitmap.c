@@ -4,7 +4,7 @@
 int main() {
     BITMAP *img, *save;
     PALETTE pal;
-    unsigned char data[444 * 440];
+    unsigned short data[444 * 440];
 
     allegro_init();
     set_color_depth(16);
