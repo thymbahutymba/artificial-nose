@@ -41,21 +41,21 @@ void import_graph(TF_Graph *graph, TF_Status *status) {
 static void Deallocator(void *data, size_t length, void *arg) {}
 
 void stretch_and_linear(tfdat_t *data) {
-    BITMAP *image;
     BITMAP *str_img = create_bitmap(299, 299);
     PALETTE pal;
 
     acquire_screen();
-    image = create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, ACT_IMG_H);
 
-    stretch_blit(image, str_img, 0, 0, image->w, image->h, 0, 0, str_img->w,
-                 str_img->h);
+    stretch_blit(screen, str_img, IMG_XT, IMG_YT, EL_W, ACT_IMG_H, 0, 0,
+                 str_img->w, str_img->h);
+
     get_palette(pal);
     save_bmp("str_prova.bmp", str_img, pal);
 
     ssize_t x;
     ssize_t line;
-
+/*
+    // All red all green all blue for each colums
     for (x = 0; x < str_img->w; ++x)
         for (line = 0; line < str_img->h; ++line) {
             int color = _getpixel16(str_img, x, line);
@@ -65,8 +65,43 @@ void stretch_and_linear(tfdat_t *data) {
             data[x * str_img->h + line + 2 * str_img->w * str_img->h] =
                 (tfdat_t)getb16(color) / (1 << 8);
         }
+*/
+    // THIS IS THE ONE THAT COULD GENERATE THE CORRECT SOLUTION
+    // AGLIO CIRCA OK, CIPOLLA NON PROPRIO, UOVA OK
+    // All red all green all blue for each rows
+    for (line = 0; line < str_img->h; ++line)
+        for (x = 0; x < str_img->w; ++x) {
+            int color = _getpixel16(str_img, x, line);
+            data[line * str_img->w + x] = (tfdat_t)getr16(color) / (1 << 8);
+            data[line * str_img->w + x + 1 * str_img->w * str_img->h] =
+                (tfdat_t)getg16(color) / (1 << 8);
+            data[line * str_img->w + x + 2 * str_img->w * str_img->h] =
+                (tfdat_t)getb16(color) / (1 << 8);
+        }
+/*
+    // R G B R G B for each colums
+    for (x = 0; x < str_img->w; ++x)
+        for (line = 0; line < str_img->h; ++line) {
+            int color = _getpixel16(str_img, x, line);
+            data[x * str_img->h + line * 3] = (tfdat_t)getr16(color) / (1 << 8);
+            data[x * str_img->h + line * 3 + 1] =
+                (tfdat_t)getg16(color) / (1 << 8);
+            data[x * str_img->h + line * 3 + 2] =
+                (tfdat_t)getb16(color) / (1 << 8);
+        }
 
-    destroy_bitmap(image);
+    // R G B R G B for each rows
+    for (line = 0; line < str_img->h; ++line)
+        for (x = 0; x < str_img->w; ++x) {
+            int color = _getpixel16(str_img, x, line);
+            data[line * str_img->w + x * 3] = (tfdat_t)getr16(color) / (1 << 8);
+            data[line * str_img->w + x * 3 + 1] =
+                (tfdat_t)getg16(color) / (1 << 8);
+            data[line * str_img->w + x * 3 + 2] =
+                (tfdat_t)getb16(color) / (1 << 8);
+        }
+*/
+    // destroy_bitmap(image);
     destroy_bitmap(str_img);
     release_screen();
 }
