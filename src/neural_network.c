@@ -40,20 +40,55 @@ void import_graph(TF_Graph *graph, TF_Status *status) {
 
 static void Deallocator(void *data, size_t length, void *arg) {}
 
-void run_session(TF_Graph *graph, TF_Status *status, tfdat_t *data) {
+void stretch_and_linear(tfdat_t *data) {
+    BITMAP *image;
+    BITMAP *str_img = create_bitmap(299, 299);
+    PALETTE pal;
+
+    acquire_screen();
+    image = create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, ACT_IMG_H);
+
+    stretch_blit(image, str_img, 0, 0, image->w, image->h, 0, 0, str_img->w,
+                 str_img->h);
+    get_palette(pal);
+    save_bmp("str_prova.bmp", str_img, pal);
+
+    ssize_t x;
+    ssize_t line;
+
+    for (x = 0; x < str_img->w; ++x)
+        for (line = 0; line < str_img->h; ++line) {
+            int color = _getpixel16(str_img, x, line);
+            data[x * str_img->h + line] = (tfdat_t)getr16(color) / (1 << 8);
+            data[x * str_img->h + line + 1 * str_img->w * str_img->h] =
+                (tfdat_t)getg16(color) / (1 << 8);
+            data[x * str_img->h + line + 2 * str_img->w * str_img->h] =
+                (tfdat_t)getb16(color) / (1 << 8);
+        }
+
+    destroy_bitmap(image);
+    destroy_bitmap(str_img);
+    release_screen();
+}
+
+void run_session(TF_Graph *graph, TF_Status *status) {
+    tfdat_t data[299 * 299 * CHANNELS];
+
     // Number of bytes of input
-    const unsigned int nb_in = ARRAY_SIZE * sizeof(tfdat_t);
+    const unsigned int nb_in = 299 * 299 * CHANNELS * sizeof(tfdat_t);
 
     // Number of bytes of output
     const int nb_out = N_LAB * sizeof(float);
 
     // Input dimensions
-    int64_t in_dims[] = {1, EL_W, ACT_IMG_H, CHANNELS};
+    int64_t in_dims[] = {1, 299, 299, CHANNELS};
     int n_in_dims = sizeof(in_dims) / sizeof(int64_t);
 
     // Output dimensions
     int64_t out_dims[] = {1, N_LAB};
     int n_out_dims = sizeof(out_dims) / sizeof(int64_t);
+
+    stretch_and_linear(data);
 
     TF_Output input_op = {TF_GraphOperationByName(graph, IN_NAME), 0};
 
@@ -85,26 +120,8 @@ void run_session(TF_Graph *graph, TF_Status *status, tfdat_t *data) {
         fprintf(stderr, "%s\n", TF_Message(status));
 }
 
-void image_linearization(tfdat_t *data) {
-    BITMAP *image;
-    acquire_screen();
-    image = create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, ACT_IMG_H);
-
-    ssize_t x;
-    ssize_t line;
-
-    for (line = 0; line < image->h; ++line)
-        for (x = 0; x < image->w; ++x)
-            data[line * image->h + x] =
-                (tfdat_t)((img_t *)image->line[line])[x] / (1 << 16);
-
-    destroy_bitmap(image);
-    release_screen();
-}
-
 void *neural_network_task(void *period) {
     struct timespec t;
-    tfdat_t data[EL_W * ACT_IMG_H * CHANNELS];
 
     TF_Graph *graph = TF_NewGraph();
     TF_Status *status = TF_NewStatus();
@@ -114,9 +131,7 @@ void *neural_network_task(void *period) {
     set_activation(&t, *(int *)period);
 
     while (1) {
-        image_linearization(data);
-
-        run_session(graph, status, data);
+        run_session(graph, status);
         wait_for_activation(&t, *(int *)period);
     }
 }
