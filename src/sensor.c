@@ -54,14 +54,14 @@ void *simulate_sensor_task(void *period) {
     set_activation(&t, *((int *)period));
 
 #ifdef AGLIO
-    const uint16_t v_rif_1 = 35000;
-    const uint16_t v_rif_2 = 19000;
+    const uint16_t v_rif_1 = 1000;
+    const uint16_t v_rif_2 = 1000;
 #elif CIPOLLA
-    const uint16_t v_rif_1 = 5000;
-    const uint16_t v_rif_2 = 25000;
+    const uint16_t v_rif_1 = 30000;
+    const uint16_t v_rif_2 = 30000;
 #else
     const uint16_t v_rif_1 = 60000;
-    const uint16_t v_rif_2 = 2500;
+    const uint16_t v_rif_2 = 60000;
 #endif
 
     init_queue();

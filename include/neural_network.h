@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <tensorflow/c/c_api.h>
 
-#define GRAPH_NAME ("new_graph.pb")
-#define LABELS_NAME ("new_labels.txt")
+#define GRAPH_NAME ("graph.pb")
+#define LABELS_NAME ("labels.txt")
 #define IN_NAME ("Placeholder")
 #define OUT_NAME ("final_result")
 

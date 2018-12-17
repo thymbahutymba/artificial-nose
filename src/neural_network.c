@@ -49,9 +49,6 @@ void stretch_and_linear(tfdat_t *data) {
     stretch_blit(screen, str_img, IMG_XT, IMG_YT, EL_W, ACT_IMG_H, 0, 0,
                  str_img->w, str_img->h);
 
-    get_palette(pal);
-    save_bmp("str_prova.bmp", str_img, pal);
-
     ssize_t x;
     ssize_t line;
 
