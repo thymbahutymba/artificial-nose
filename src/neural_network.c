@@ -1,6 +1,8 @@
 #include "neural_network.h"
 
-void free_buffer(void *data, size_t length) { free(data); }
+void free_buffer(void *data, size_t length __attribute__((unused))) {
+    free(data);
+}
 
 /* Read file containing the graph of the neural network and initialize the
  * TF_Buffer
@@ -38,29 +40,37 @@ void import_graph(TF_Graph *graph, TF_Status *status) {
     TF_DeleteBuffer(graph_def);
 }
 
-static void Deallocator(void *data, size_t length, void *arg) {}
+static void deallocator(void *data __attribute__((unused)),
+                        size_t length __attribute__((unused)),
+                        void *arg __attribute__((unused))) {}
 
-void stretch_and_linear(tfdat_t *data) {
-    BITMAP *str_img = create_bitmap(299, 299);
-    PALETTE pal;
+void stretch_and_linear(float data[FIXED_S][FIXED_S][CHANNELS]) {
+    BITMAP *str_img = create_bitmap(FIXED_S, FIXED_S);
+    ssize_t col; // Index of colums among X axis
+    ssize_t row; // Index of lines among Y axis
 
     acquire_screen();
 
+    // Stretch image with fixed size as tensorflow model wants
     stretch_blit(screen, str_img, IMG_XT, IMG_YT, EL_W, ACT_IMG_H, 0, 0,
                  str_img->w, str_img->h);
 
-    ssize_t x;
-    ssize_t line;
+    /* TODO: TESTING CODE TO BE REMOVED */
+    /*
+    PALETTE pal;
+    BITMAP *image;
+    image = load_bmp("image_neural_network/aglio/image_0002.bmp", pal);
+    stretch_blit(image, str_img, 0, 0, image->w, image->h, 0, 0, str_img->w,
+                 str_img->h);
+    */
 
     // All red all green all blue for each rows
-    for (line = 0; line < str_img->h; ++line)
-        for (x = 0; x < str_img->w; ++x) {
-            int color = _getpixel16(str_img, x, line);
-            data[line * str_img->w + x] = (tfdat_t)getr16(color) / (1 << 8);
-            data[line * str_img->w + x + 1 * str_img->w * str_img->h] =
-                (tfdat_t)getg16(color) / (1 << 8);
-            data[line * str_img->w + x + 2 * str_img->w * str_img->h] =
-                (tfdat_t)getb16(color) / (1 << 8);
+    for (row = 0; row < str_img->h; ++row)
+        for (col = 0; col < str_img->w; ++col) {
+            int color = _getpixel16(str_img, col, row);
+            data[row][col][0] = (float)getr16(color) / MAX_CC;
+            data[row][col][1] = (float)getg16(color) / MAX_CC;
+            data[row][col][2] = (float)getb16(color) / MAX_CC;
         }
 
     destroy_bitmap(str_img);
@@ -68,16 +78,16 @@ void stretch_and_linear(tfdat_t *data) {
 }
 
 void run_session(TF_Graph *graph, TF_Status *status) {
-    tfdat_t data[299 * 299 * CHANNELS];
+    float data[FIXED_S][FIXED_S][CHANNELS];
 
     // Number of bytes of input
-    const unsigned int nb_in = 299 * 299 * CHANNELS * sizeof(tfdat_t);
+    const unsigned int nb_in = ARRAY_SIZE * sizeof(float);
 
     // Number of bytes of output
     const int nb_out = N_LAB * sizeof(float);
 
     // Input dimensions
-    int64_t in_dims[] = {1, 299, 299, CHANNELS};
+    int64_t in_dims[] = {1, FIXED_S, FIXED_S, CHANNELS};
     int n_in_dims = sizeof(in_dims) / sizeof(int64_t);
 
     // Output dimensions
@@ -89,7 +99,7 @@ void run_session(TF_Graph *graph, TF_Status *status) {
     TF_Output input_op = {TF_GraphOperationByName(graph, IN_NAME), 0};
 
     TF_Tensor *input_tensor = TF_NewTensor(TF_FLOAT, in_dims, n_in_dims, data,
-                                           nb_in, &Deallocator, 0);
+                                           nb_in, &deallocator, 0);
 
     TF_Output output = {TF_GraphOperationByName(graph, OUT_NAME), 0};
 

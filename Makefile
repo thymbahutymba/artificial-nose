@@ -15,7 +15,7 @@ CFLAGS += -Wall -Wextra -I$(INC_DIR)
 all: $(BIN)
 
 $(BIN): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) -lalleg
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(ALLEGRO)
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
 	$(CC) -c $(CFLAGS) $< -o $@
@@ -27,6 +27,6 @@ clean:
 retrain:
 	python3 retrain.py \
 		--image_dir=image_neural_network \
-		--output_graph new_graph.pb \
-		--output_labels new_labels.txt \
+		--output_graph graph.pb \
+		--output_labels labels.txt \
 		--how_many_training_steps 500

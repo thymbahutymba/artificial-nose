@@ -98,7 +98,7 @@ void draw_graph(unsigned int *last_draw) {
 
     // Prints of the portions of graphs that is not be drawn yet
     for (; *last_draw != (r_data.top + GRAPH_ELEMENT - 2) % GRAPH_ELEMENT;
-         *last_draw = (++(*last_draw)) % GRAPH_ELEMENT) {
+         *last_draw = (*last_draw + 1) % GRAPH_ELEMENT) {
 
         /* Compute the normalized values. These values are two in order to draw
          * a line that joins both points. */
@@ -172,14 +172,12 @@ void shift_to_bottom() {
 
 /* Displays the last values ​​not yet printed on the screen. */
 void draw_image(unsigned int *last_draw) {
-    uint32_t f_color; // background of rectangle that represent one element
-
     acquire_screen();
     pthread_mutex_lock(&mutex_data);
 
     // Draws the elements that are not drawn yet
     for (; *last_draw != (r_data.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT;
-         *last_draw = (++(*last_draw)) % GRAPH_ELEMENT) {
+         *last_draw = (*last_draw + 1) % GRAPH_ELEMENT) {
 
         // Shift image one line at bottom
         shift_to_bottom();

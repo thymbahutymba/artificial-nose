@@ -41,7 +41,7 @@ void *read_from_sensor_task(void *period) {
         read(port, (void *)&var[0], 4);
         r_data.co2[r_data.top] = var[1] << 8 | var[0];
         r_data.tvoc[r_data.top] = var[3] << 8 | var[2];
-        r_data.top = ++r_data.top % GRAPH_ELEMENT;
+        r_data.top = (r_data.top + 1) % GRAPH_ELEMENT;
         pthread_mutex_unlock(&mutex_data);
 
         wait_for_activation(&t, *((int *)period));
@@ -53,16 +53,8 @@ void *simulate_sensor_task(void *period) {
 
     set_activation(&t, *((int *)period));
 
-#ifdef AGLIO
-    const uint16_t v_rif_1 = 1000;
-    const uint16_t v_rif_2 = 1000;
-#elif CIPOLLA
-    const uint16_t v_rif_1 = 30000;
-    const uint16_t v_rif_2 = 30000;
-#else
-    const uint16_t v_rif_1 = 60000;
-    const uint16_t v_rif_2 = 60000;
-#endif
+    const uint16_t v_rif_1 = R_CO2;
+    const uint16_t v_rif_2 = R_TVOC;
 
     init_queue();
 
@@ -70,7 +62,7 @@ void *simulate_sensor_task(void *period) {
         pthread_mutex_lock(&mutex_data);
         r_data.co2[r_data.top] = v_rif_1 + (rand() % (RANGE));
         r_data.tvoc[r_data.top] = v_rif_2 + (rand() % (RANGE));
-        r_data.top = ++r_data.top % GRAPH_ELEMENT;
+        r_data.top = (r_data.top + 1) % GRAPH_ELEMENT;
         pthread_mutex_unlock(&mutex_data);
 
         wait_for_activation(&t, *((int *)period));
