@@ -140,6 +140,7 @@ struct args {
     TF_Graph *graph;
 };
 
+/* Clean all stuff allocated by tensorflow */
 void clean_up(void *args) {
     TF_CloseSession(((struct args *)args)->session,
                     ((struct args *)args)->status);
@@ -164,6 +165,8 @@ void *neural_network_task(void *period) {
     // New session with associated graph
     TF_SessionOptions *sess_opts = TF_NewSessionOptions();
     TF_Session *session = TF_NewSession(graph, sess_opts, status);
+
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
     arguments.session = session;
     arguments.status = status;
