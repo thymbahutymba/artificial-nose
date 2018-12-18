@@ -14,8 +14,9 @@
 #define IN_NAME ("Placeholder")    // Name of input layer (default)
 #define OUT_NAME ("final_result")  // Name of output layer (default)
 
-#define N_LAB (4)
-#define LABELS ((const char *const[N_LAB]){"A: %f", "B: %f", "C: %f", "D: %f"})
+// Array of labels for which the nn is trained
+#define LABELS ((const char *const[]){"A: %f", "B: %f", "C: %f", "D: %f"})
+#define N_LAB (sizeof(LABELS) / sizeof(char *)) // Number of labels
 
 #define FIXED_S (299) // Fixed size of image accepted by tensorflow model
 

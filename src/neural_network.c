@@ -1,5 +1,6 @@
 #include "neural_network.h"
 
+/* Frees the data previously allocated for tensorflow graph */
 void free_buffer(void *data, size_t length __attribute__((unused))) {
     free(data);
 }
@@ -24,7 +25,7 @@ TF_Buffer *read_file(const char *file) {
     return buf;
 }
 
-// import the graph in the main graph
+/* Import the graph in the main graph */
 void import_graph(TF_Graph *graph, TF_Status *status) {
     TF_Buffer *graph_def = read_file(GRAPH_NAME);
 
@@ -45,9 +46,11 @@ static void deallocator(void *data __attribute__((unused)),
                         void *arg __attribute__((unused))) {}
 
 void stretch_and_linear(float data[FIXED_S][FIXED_S][CHANNELS]) {
+    // Bitmap that will contains the stretched image
     BITMAP *str_img = create_bitmap(FIXED_S, FIXED_S);
     ssize_t col; // Index of colums among X axis
     ssize_t row; // Index of lines among Y axis
+    int color;   // Pixel color acquired from stretched image
 
     acquire_screen();
 
@@ -67,7 +70,11 @@ void stretch_and_linear(float data[FIXED_S][FIXED_S][CHANNELS]) {
     // All red all green all blue for each rows
     for (row = 0; row < str_img->h; ++row)
         for (col = 0; col < str_img->w; ++col) {
-            int color = _getpixel16(str_img, col, row);
+            // Gets the 16-bit pixel color of the  in the given location
+            color = _getpixel16(str_img, col, row);
+
+            /* Extracts the red, green and blue component from color and
+            normalize it from 0 to 1 */
             data[row][col][0] = (float)getr16(color) / MAX_CC;
             data[row][col][1] = (float)getg16(color) / MAX_CC;
             data[row][col][2] = (float)getb16(color) / MAX_CC;
