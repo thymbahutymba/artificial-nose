@@ -31,13 +31,14 @@ void import_graph(TF_Graph *graph, TF_Status *status) {
 
     TF_ImportGraphDefOptions *opts = TF_NewImportGraphDefOptions();
     TF_GraphImportGraphDef(graph, graph_def, opts, status);
-    TF_DeleteImportGraphDefOptions(opts);
+
     // check status
     if (TF_GetCode(status) != TF_OK) {
         fprintf(stderr, "ERROR: Unable to import graph %s", TF_Message(status));
         return;
     }
 
+    TF_DeleteImportGraphDefOptions(opts);
     TF_DeleteBuffer(graph_def);
 }
 
@@ -45,8 +46,10 @@ static void deallocator(void *data __attribute__((unused)),
                         size_t length __attribute__((unused)),
                         void *arg __attribute__((unused))) {}
 
-void stretch_and_linear(float data[FIXED_S][FIXED_S][CHANNELS]) {
-    // Bitmap that will contains the stretched image
+/* Resize the image as desired by the tensorflow model and inserts the integer
+ * values casted to floating point values ​​into a third-order tensor */
+void resize_and_convert(float data[FIXED_S][FIXED_S][CHANNELS]) {
+    // Bitmap that contains the stretched image
     BITMAP *str_img = create_bitmap(FIXED_S, FIXED_S);
     ssize_t col; // Index of colums among X axis
     ssize_t row; // Index of lines among Y axis
@@ -58,23 +61,15 @@ void stretch_and_linear(float data[FIXED_S][FIXED_S][CHANNELS]) {
     stretch_blit(screen, str_img, IMG_XT, IMG_YT, EL_W, ACT_IMG_H, 0, 0,
                  str_img->w, str_img->h);
 
-    /* TODO: TESTING CODE TO BE REMOVED */
-    /*
-    PALETTE pal;
-    BITMAP *image;
-    image = load_bmp("image_neural_network/aglio/image_0002.bmp", pal);
-    stretch_blit(image, str_img, 0, 0, image->w, image->h, 0, 0, str_img->w,
-                 str_img->h);
-    */
-
-    // All red all green all blue for each rows
+    /* Scan the bitmap row by row, column by column and get pixel color */
     for (row = 0; row < str_img->h; ++row)
         for (col = 0; col < str_img->w; ++col) {
-            // Gets the 16-bit pixel color of the  in the given location
+            /* Gets the 16-bit pixel color of the stretched image in the given
+             * location */
             color = _getpixel16(str_img, col, row);
 
             /* Extracts the red, green and blue component from color and
-            normalize it from 0 to 1 */
+             * normalize it from 0 to 1 */
             data[row][col][0] = (float)getr16(color) / MAX_CC;
             data[row][col][1] = (float)getg16(color) / MAX_CC;
             data[row][col][2] = (float)getb16(color) / MAX_CC;
@@ -84,7 +79,8 @@ void stretch_and_linear(float data[FIXED_S][FIXED_S][CHANNELS]) {
     release_screen();
 }
 
-void run_session(TF_Graph *graph, TF_Status *status) {
+void run_session(TF_Session *session, TF_Graph *graph, TF_Status *status) {
+    // Third order tensor that contains the resized bitmap
     float data[FIXED_S][FIXED_S][CHANNELS];
 
     // Number of bytes of input
@@ -101,21 +97,22 @@ void run_session(TF_Graph *graph, TF_Status *status) {
     int64_t out_dims[] = {1, N_LAB};
     int n_out_dims = sizeof(out_dims) / sizeof(int64_t);
 
-    stretch_and_linear(data);
+    // Resizing and converting image as tensorflow model wants
+    resize_and_convert(data);
 
     TF_Output input_op = {TF_GraphOperationByName(graph, IN_NAME), 0};
 
+    // Tensor that represents the image
     TF_Tensor *input_tensor = TF_NewTensor(TF_FLOAT, in_dims, n_in_dims, data,
                                            nb_in, &deallocator, 0);
 
     TF_Output output = {TF_GraphOperationByName(graph, OUT_NAME), 0};
 
+    // Tensor that contains the results given by neural network
     TF_Tensor *output_values =
         TF_AllocateTensor(TF_FLOAT, out_dims, n_out_dims, nb_out);
 
-    TF_SessionOptions *sess_opts = TF_NewSessionOptions();
-    TF_Session *session = TF_NewSession(graph, sess_opts, status);
-
+    // Run the graph associated with the session
     TF_SessionRun(session,
                   NULL,                        // Run options
                   &input_op, &input_tensor, 1, // in: tensor, values, number
@@ -131,20 +128,56 @@ void run_session(TF_Graph *graph, TF_Status *status) {
         pthread_mutex_unlock(&mutex_res);
     } else
         fprintf(stderr, "%s\n", TF_Message(status));
+
+    TF_DeleteTensor(input_tensor);
+    TF_DeleteTensor(output_values);
+}
+
+struct args {
+    TF_Session *session;
+    TF_Status *status;
+    TF_SessionOptions *sess_opts;
+    TF_Graph *graph;
+};
+
+void clean_up(void *args) {
+    TF_CloseSession(((struct args *)args)->session,
+                    ((struct args *)args)->status);
+    TF_DeleteSession(((struct args *)args)->session,
+                     ((struct args *)args)->status);
+    TF_DeleteStatus(((struct args *)args)->status);
+    TF_DeleteSessionOptions(((struct args *)args)->sess_opts);
+    TF_DeleteGraph(((struct args *)args)->graph);
+
+    printf("Cleaned\n");
 }
 
 void *neural_network_task(void *period) {
     struct timespec t;
+    struct args arguments;
 
     TF_Graph *graph = TF_NewGraph();
     TF_Status *status = TF_NewStatus();
 
     import_graph(graph, status);
 
+    // New session with associated graph
+    TF_SessionOptions *sess_opts = TF_NewSessionOptions();
+    TF_Session *session = TF_NewSession(graph, sess_opts, status);
+
+    arguments.session = session;
+    arguments.status = status;
+    arguments.sess_opts = sess_opts;
+    arguments.graph = graph;
+
+    pthread_cleanup_push(&clean_up, &arguments);
+
     set_activation(&t, *(int *)period);
 
     while (1) {
-        run_session(graph, status);
+        run_session(session, graph, status);
         wait_for_activation(&t, *(int *)period);
     }
+
+    pthread_cleanup_pop(1);
 }
