@@ -223,7 +223,7 @@ void draw_text() {
     pthread_mutex_lock(&mutex_keyboard);
 
     // Print current mode
-    textout_ex(screen, font, txt_mode[act_mode], TEXT_X1, TEXT_Y1, MAIN_COLOR,
+    textout_ex(screen, font, txt_mode[cur_mode], TEXT_X1, TEXT_Y1, MAIN_COLOR,
                BKG_COLOR);
 
     // Print text acquired from keyboard
