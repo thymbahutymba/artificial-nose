@@ -257,6 +257,29 @@ void draw_results() {
     pthread_mutex_unlock(&mutex_res);
 }
 
+void draw_histogram() {
+    size_t i;
+    float cazzo[N_LAB];
+
+    pthread_mutex_lock(&mutex_res);
+
+    for (i = 0; i < N_LAB; ++i) {
+        if (result == NULL)
+            cazzo[i] = 0;
+        else
+            cazzo[i] = result[i];
+
+        rectfill(screen, RTEXT_X + 150, RTEXT_Y + LINE_SPACE * (i + 1),
+                 RTEXT_X + 150 + 200, RTEXT_Y + LINE_SPACE * (i + 1) + 10,
+                 BKG_COLOR);
+
+        rectfill(screen, RTEXT_X + 150, RTEXT_Y + LINE_SPACE * (i + 1),
+                 RTEXT_X + 150 + cazzo[i] * 200,
+                 RTEXT_Y + LINE_SPACE * (i + 1) + 10, TEXT_COLOR);
+    }
+    pthread_mutex_unlock(&mutex_res);
+}
+
 /* Periodic task manually activated for images storing in specific directory
  * created in writing mode. */
 void *store_image_task(void *period) {
@@ -297,6 +320,8 @@ void *graphic_task(void *period) {
         draw_text();
 
         draw_results();
+        
+        draw_histogram();
         wait_for_activation(&t, *((int *)period));
     }
 
