@@ -26,7 +26,7 @@
 #define CHANNELS (3)    // RGB Image
 
 // Number of element that it's sampled by sensor
-#define GRAPH_ELEMENT (55)
+#define GRAPH_ELEMENT (66)
 
 /*******************************************************************************
  * IMAGE
