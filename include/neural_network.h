@@ -25,6 +25,15 @@
 
 #define MAX_CC (1 << 8) // Max value for each color channel
 
+/* Data structure that contains all stuff allocated by tensorflow */
+struct args {
+    TF_Session *session;
+    TF_Status *status;
+    TF_SessionOptions *sess_opts;
+    TF_Graph *graph;
+    TF_Tensor *out_vals;
+};
+
 typedef short unsigned int img_t; // Type of value for each pixel of image
 
 float *result;
