@@ -23,6 +23,9 @@
 // Number of elements contained into tensor
 #define ARRAY_SIZE (FIXED_S * FIXED_S * CHANNELS)
 
+// Max file size for load the tensorflow graph
+#define MAX_FS (1 << 27)
+
 #define MAX_CC (1 << 8) // Max value for each color channel
 
 /* Data structure that contains all stuff allocated by tensorflow */

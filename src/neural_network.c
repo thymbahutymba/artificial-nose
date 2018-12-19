@@ -1,25 +1,36 @@
 #include "neural_network.h"
 
+unsigned char f_graph[MAX_FS];
+
 /* Frees the data previously allocated for tensorflow graph */
-void free_buffer(void *data, size_t length __attribute__((unused))) {
-    free(data);
-}
+void free_buffer(void *data __attribute__((unused)),
+                 size_t length __attribute__((unused))) {}
+
+/* Frees the data associated to input tensor */
+static void deallocator(void *data __attribute__((unused)),
+                        size_t length __attribute__((unused)),
+                        void *arg __attribute__((unused))) {}
 
 /* Read file containing the graph of the neural network and initialize the
- * TF_Buffer
- */
+ * TF_Buffer */
 TF_Buffer *read_file(const char *file) {
+    // Open file that contains graph
     FILE *f = fopen(file, "rb");
+
+    /* Move the position indicator to the end of file for compute the exact file
+     * size */
     fseek(f, 0, SEEK_END);
-    long fsize = ftell(f);
+    long int fsize = ftell(f);
+
+    // Move back the position indicator to the begging of file
     fseek(f, 0, SEEK_SET);
 
-    void *data = malloc(fsize);
-    fread(data, fsize, 1, f);
+    // Read the graph from file and put it in the allocated array
+    fread(f_graph, fsize, 1, f);
     fclose(f);
 
     TF_Buffer *buf = TF_NewBuffer();
-    buf->data = data;
+    buf->data = f_graph;
     buf->length = fsize;
     buf->data_deallocator = free_buffer;
     return buf;
@@ -27,12 +38,14 @@ TF_Buffer *read_file(const char *file) {
 
 /* Import the graph in the main graph */
 void import_graph(TF_Graph *graph, TF_Status *status) {
+    // Read graph from file
     TF_Buffer *graph_def = read_file(GRAPH_NAME);
 
+    // Import the graph serialized in graph_def into graph
     TF_ImportGraphDefOptions *opts = TF_NewImportGraphDefOptions();
     TF_GraphImportGraphDef(graph, graph_def, opts, status);
 
-    // check status
+    // Check if something is gone wrong
     if (TF_GetCode(status) != TF_OK) {
         fprintf(stderr, "ERROR: Unable to import graph %s", TF_Message(status));
         return;
@@ -41,10 +54,6 @@ void import_graph(TF_Graph *graph, TF_Status *status) {
     TF_DeleteImportGraphDefOptions(opts);
     TF_DeleteBuffer(graph_def);
 }
-
-static void deallocator(void *data __attribute__((unused)),
-                        size_t length __attribute__((unused)),
-                        void *arg __attribute__((unused))) {}
 
 /* Resize the image as desired by the tensorflow model and inserts the integer
  * values casted to floating point values ​​into a third-order tensor */
