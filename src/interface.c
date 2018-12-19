@@ -240,6 +240,9 @@ void draw_results() {
     size_t i;
     char msg[BUFFER_SIZE];
 
+    textout_ex(screen, font, "RESULTS", RTEXT_X, RTEXT_Y, MAIN_COLOR,
+               BKG_COLOR);
+
     pthread_mutex_lock(&mutex_res);
 
     for (i = 0; i < N_LAB; ++i) {
@@ -248,7 +251,7 @@ void draw_results() {
         else
             sprintf(msg, LABELS[i], result[i]);
 
-        textout_ex(screen, font, msg, RTEXT_X, RTEXT_Y + LINE_SPACE * i,
+        textout_ex(screen, font, msg, RTEXT_X, RTEXT_Y + LINE_SPACE * (i + 1),
                    TEXT_COLOR, BKG_COLOR);
     }
     pthread_mutex_unlock(&mutex_res);
