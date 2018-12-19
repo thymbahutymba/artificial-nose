@@ -7,7 +7,7 @@
 /* Initialization of allegro and setting color mode to RGBA */
 void init_interface() {
     PALETTE palette;
-    
+
     allegro_init();
     set_color_depth(COLOR_MODE);
     set_gfx_mode(GFX_AUTODETECT_WINDOWED, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0);
@@ -54,7 +54,7 @@ void draw_background() {
                    LTEXT_Y + LINE_SPACE * (i + 1), TEXT_COLOR, BKG_COLOR);
 
     // Prints the text where will be displayed CO2 and tVOC values
-    textout_ex(screen, font, "Current value:    CO2:        tVOC:", SXT_S,
+    textout_ex(screen, font, "Current value:  CO2:     tVOC:", SXT_S,
                SYT_SCURRENT, TEXT_COLOR, BKG_COLOR);
 
     release_screen();
@@ -146,7 +146,7 @@ void draw_information() {
 
     // Print on screen the CO2 value
     sprintf(s, "%i", c_CO2);
-    textout_ex(screen, font, "     ", SXT_CO2, SYT_SCURRENT, 0, 0);
+    textout_ex(screen, font, "    ", SXT_CO2, SYT_SCURRENT, 0, 0);
     textout_ex(screen, font, s, SXT_CO2, SYT_SCURRENT, TEXT_COLOR, 0);
 
     // Print on screen the tVOC value
@@ -222,7 +222,7 @@ void save_image(int index_image) {
 void draw_text() {
     char *txt_mode[] = {"WRITING: ", "SAVING:  "};
     // Offset among X axis for printing text input
-    int x_off = strlen(txt_mode[0]) * 8;
+    int x_off = strlen(txt_mode[0]) * 10;
 
     pthread_mutex_lock(&mutex_keyboard);
 

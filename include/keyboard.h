@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#define BUFFER_SIZE (40) // Size of the buffer to read the input by keyboard
+#define BUFFER_SIZE (20) // Size of the buffer to read the input by keyboard
 #define PATH_I_NN ("image_neural_network/") // Path where to save the images
 
 typedef enum mode { WRITING, SAVING } mode;
