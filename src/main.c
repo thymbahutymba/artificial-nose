@@ -35,6 +35,7 @@ int main() {
         pthread_join(task_table[index].id, NULL);
 
     destroy_font(font);
-    allegro_exit();
     return 0;
 }
+
+END_OF_MAIN()
