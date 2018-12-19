@@ -8,11 +8,8 @@ void get_keycodes(char *scan, char *ascii) {
 }
 
 // Check the pressed key and do accordingly
-void handle_key(char scan, char ascii, unsigned int *i_key) {
+void handle_key(Task *t_img, char scan, char ascii, unsigned int *i_key) {
     char path2save[BUFFER_SIZE];
-
-    // Storing task when the mode is SAVING
-    Task t_img = {-1, store_image_task, 20, 500};
 
     pthread_mutex_lock(&mutex_keyboard);
 
@@ -22,17 +19,17 @@ void handle_key(char scan, char ascii, unsigned int *i_key) {
             // Clean the buffer, screen output and cancel the image storing task
             sprintf(keyboard_buf, "%*s", BUFFER_SIZE - 1, " ");
             *i_key = 0;
-            
+
             // Cancel the storing thread and wait until the termination
-            pthread_cancel(t_img.id);
-            pthread_join(t_img.id, NULL);
+            pthread_cancel(t_img->id);
+            pthread_join(t_img->id, NULL);
         } else {
             // Create the folder for storing the image
             sprintf(path2save, "%s%s", PATH_I_NN, keyboard_buf);
             mkdir(path2save, 0755);
 
             // Start image storing task
-            task_create(&t_img);
+            task_create(t_img);
         }
         // Switch current mode
         cur_mode = (cur_mode == SAVING) ? WRITING : SAVING;
@@ -58,6 +55,9 @@ void *keyboard_task(void *period) {
     char scan, ascii;
     unsigned int i_key = 0; // last char inserted in buffer
 
+    // Storing task when the mode is SAVING
+    Task t_img = {-1, store_image_task, 20, 500};
+
     pthread_mutex_init(&mutex_keyboard, NULL);
     install_keyboard();
 
@@ -75,10 +75,8 @@ void *keyboard_task(void *period) {
         if (scan == KEY_ESC)
             return NULL;
         else
-            handle_key(scan, ascii, &i_key);
+            handle_key(&t_img, scan, ascii, &i_key);
 
         wait_for_activation(&t, *((int *)period));
     }
-
-    return NULL;
 }

@@ -30,6 +30,19 @@ void set_activation(struct timespec *t, int p) {
     time_add_ms(t, p);
 }
 
+/* Comparison between time */
+int time_cmp(struct timespec t1, struct timespec t2) {
+    if (t1.tv_sec > t2.tv_sec)
+        return 1;
+    if (t1.tv_sec < t2.tv_sec)
+        return -1;
+    if (t1.tv_nsec > t2.tv_nsec)
+        return 1;
+    if (t1.tv_nsec < t2.tv_nsec)
+        return -1;
+    return 0;
+}
+
 /* Create new thread with parameter of task */
 int task_create(Task *t) {
     pthread_attr_t attr;

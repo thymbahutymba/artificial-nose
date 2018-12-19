@@ -197,7 +197,7 @@ void *neural_network_task(void *period) {
     tf_init(&graph, &status, &sess, &sess_opts, &arguments, &out_vals);
 
     // Not needed i guess, but still remain here for a while
-    // pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
     // Push the routine that is executed after receiving cancellation request
     pthread_cleanup_push(&tf_exit, &arguments);
