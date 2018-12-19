@@ -6,9 +6,13 @@
 
 /* Initialization of allegro and setting color mode to RGBA */
 void init_interface() {
+    PALETTE palette;
+    
     allegro_init();
     set_color_depth(COLOR_MODE);
     set_gfx_mode(GFX_AUTODETECT_WINDOWED, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0);
+
+    font = load_font("fonts/hackBold10.pcx", palette, NULL);
 }
 
 /* Prints of all background that will not be changed during program execution */

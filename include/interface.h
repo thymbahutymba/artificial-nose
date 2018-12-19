@@ -20,7 +20,7 @@
 #define GRAPH1_COLOR (0b1111100000000000) // red for CO2 graph
 #define GRAPH2_COLOR (0b0000011111100000) // green for tVOC gragh
 #define BKG_COLOR (0b0000000000000000)    // black for background
-#define LINE_SPACE (14)                   // space between each line of text
+#define LINE_SPACE (16)                   // space between each line of text
 
 #define COLOR_MODE (16) // Sets the pixel color format to be used
 #define CHANNELS (3)    // RGB Image
