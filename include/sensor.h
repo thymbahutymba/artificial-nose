@@ -4,12 +4,13 @@
 #include "interface.h"
 #include "ptask.h"
 #include <termios.h>
-//#include <stdint.h>
 
+// Range between which the reference value can fluctuate
 #define RANGE (512) // 1 << 11
 #define BOTTOM_LIMIT (0)
 #define UPPER_LIMIT (65536) // 1 << 16 (MODE) -> 1 << MODE
 
+// Reference values ​​for each class for which the neural network has been trained
 #ifdef A
 #define R_CO2 (50000)
 #define R_TVOC (20000)
