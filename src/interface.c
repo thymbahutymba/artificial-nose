@@ -224,6 +224,7 @@ void draw_text() {
     // Offset among X axis for printing text input
     int x_off = strlen(txt_mode[0]) * 10;
 
+    acquire_screen();
     pthread_mutex_lock(&mutex_keyboard);
 
     // Print current mode
@@ -234,6 +235,7 @@ void draw_text() {
     textout_ex(screen, font, keyboard_buf, TEXT_X1 + x_off, TEXT_Y1, TEXT_COLOR,
                BKG_COLOR);
     pthread_mutex_unlock(&mutex_keyboard);
+    release_screen();
 }
 
 void draw_results() {
@@ -243,6 +245,7 @@ void draw_results() {
     textout_ex(screen, font, "RESULTS", RTEXT_X, RTEXT_Y, MAIN_COLOR,
                BKG_COLOR);
 
+    acquire_screen();
     pthread_mutex_lock(&mutex_res);
 
     for (i = 0; i < N_LAB; ++i) {
@@ -255,30 +258,29 @@ void draw_results() {
                    TEXT_COLOR, BKG_COLOR);
     }
     pthread_mutex_unlock(&mutex_res);
+    release_screen();
 }
 
+/*
 void draw_histogram() {
     size_t i;
-    float cazzo[N_LAB];
 
+    acquire_screen();
     pthread_mutex_lock(&mutex_res);
 
     for (i = 0; i < N_LAB; ++i) {
-        if (result == NULL)
-            cazzo[i] = 0;
-        else
-            cazzo[i] = result[i];
 
         rectfill(screen, RTEXT_X + 150, RTEXT_Y + LINE_SPACE * (i + 1),
                  RTEXT_X + 150 + 200, RTEXT_Y + LINE_SPACE * (i + 1) + 10,
                  BKG_COLOR);
 
         rectfill(screen, RTEXT_X + 150, RTEXT_Y + LINE_SPACE * (i + 1),
-                 RTEXT_X + 150 + cazzo[i] * 200,
+                 RTEXT_X + 150 + result[i] * 200,
                  RTEXT_Y + LINE_SPACE * (i + 1) + 10, TEXT_COLOR);
     }
     pthread_mutex_unlock(&mutex_res);
-}
+    release_screen();
+}*/
 
 /* Periodic task manually activated for images storing in specific directory
  * created in writing mode. */

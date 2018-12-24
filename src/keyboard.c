@@ -7,7 +7,7 @@ void get_keycodes(char *scan, char *ascii) {
     *scan = k >> 8;
 }
 
-// Check the pressed key and do accordingly
+/* Check the pressed key and do accordingly */
 void handle_key(Task *t_img, char scan, char ascii, unsigned int *i_key) {
     char path2save[BUFFER_SIZE + strlen(PATH_I_NN)];
 
