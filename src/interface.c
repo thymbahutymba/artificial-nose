@@ -321,11 +321,8 @@ void *graphic_task(void *period) {
         // Prints text acquired from keyboard
         draw_text();
 
+        // Prints the results computed by neural network
         draw_results();
-        
-        draw_histogram();
         wait_for_activation(&t, *((int *)period));
     }
-
-    // allegro_exit();
 }
