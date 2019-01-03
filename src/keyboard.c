@@ -37,7 +37,7 @@ void handle_key(Task *t_img, char scan, char ascii, unsigned int *i_key) {
 
     // Delete letters when backspace is pressed and WRITING mode is active
     if (!cur_mode && scan == KEY_BACKSPACE && *i_key) {
-        keyboard_buf[--(*i_key)] = ' ';
+        keyboard_buf[--(*i_key)] = '\0';
     } else if (!cur_mode && *i_key < BUFFER_SIZE &&
                ((scan >= KEY_A && scan <= KEY_9_PAD) || scan == KEY_MINUS ||
                 scan == KEY_STOP)) {

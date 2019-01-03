@@ -6,7 +6,7 @@
 
 /* Initialization of allegro and setting color mode to RGBA */
 void init_interface() {
-    //PALETTE palette;
+    // PALETTE palette;
 
     allegro_init();
     set_color_depth(COLOR_MODE);
@@ -111,12 +111,14 @@ void draw_graph(unsigned int *last_draw) {
         /* Drawing of the line for CO2 graph that joins the two points that
          * have been considered */
         fastline(screen, r_data.x_point[*last_draw], GRAPH_BASE - n_co2_1,
-                 r_data.x_point[*last_draw + 1], GRAPH_BASE - n_co2_2, GRAPH1_COLOR);
+                 r_data.x_point[*last_draw + 1], GRAPH_BASE - n_co2_2,
+                 GRAPH1_COLOR);
 
         /* Drawing of the line for tVOC graph that joins the two points that
          * have been considered */
         fastline(screen, r_data.x_point[*last_draw], GRAPH_BASE - n_tvoc_1,
-                 r_data.x_point[*last_draw + 1], GRAPH_BASE - n_tvoc_2, GRAPH2_COLOR);
+                 r_data.x_point[*last_draw + 1], GRAPH_BASE - n_tvoc_2,
+                 GRAPH2_COLOR);
         release_screen();
     }
     pthread_mutex_unlock(&mutex_data);
@@ -221,6 +223,9 @@ void draw_text() {
     char *txt_mode[] = {"WRITING: ", "SAVING:  "};
     // Offset among X axis for printing text input
     int x_off = strlen(txt_mode[0]) * 8;
+    char text[BUFFER_SIZE];  // Text to be printed
+    static size_t old_l = 0; // Length of previous keyboard buffer
+    size_t len;              // Difference between old and new keyboard buffer
 
     acquire_screen();
     pthread_mutex_lock(&mutex_keyboard);
@@ -229,10 +234,21 @@ void draw_text() {
     textout_ex(screen, font, txt_mode[cur_mode], TEXT_X1, TEXT_Y1, MAIN_COLOR,
                BKG_COLOR);
 
-    // Print text acquired from keyboard
-    textout_ex(screen, font, keyboard_buf, TEXT_X1 + x_off, TEXT_Y1, TEXT_COLOR,
-               BKG_COLOR);
+    len = old_l - strlen(keyboard_buf);
+
+    // The new length of keyboard buffer is less than the previous one
+    if (len > 0)
+        sprintf(text, "%s%*s", keyboard_buf, (int)len, " ");
+    else
+        sprintf(text, "%s", keyboard_buf);
+
+    old_l -= len; // New the length of keyboard buffer
     pthread_mutex_unlock(&mutex_keyboard);
+
+    // Print text acquired from keyboard
+    textout_ex(screen, font, text, TEXT_X1 + x_off, TEXT_Y1, TEXT_COLOR,
+               BKG_COLOR);
+
     release_screen();
 }
 
