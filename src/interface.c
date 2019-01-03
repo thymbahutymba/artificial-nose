@@ -82,7 +82,7 @@ void clear_graph() {
 
     // Create reference to graph zone
     bmp = create_sub_bitmap(
-        screen, GRAPH_X1 + INTERNAL_MARGIN, GRAPH_Y2 + INTERNAL_MARGIN,
+        screen, GRAPH_X1 + INTERNAL_MARGIN, GRAPH_Y1 + INTERNAL_MARGIN,
         GRAPH_WIDTH - INTERNAL_MARGIN, GRAPH_HEIGHT - INTERNAL_MARGIN);
 
     // Clean graph section for drawing new graph from start
@@ -93,8 +93,6 @@ void clear_graph() {
 /* Drawing of both graphs tVOC and CO2 that represents the last GRAPH_ELEMENT
  * values that were sampled by sensor. */
 void draw_graph(unsigned int *last_draw) {
-    // Location of x axis on the screen
-    const unsigned int base = GRAPH_Y1 - INTERNAL_MARGIN;
     unsigned int n_co2_1, n_tvoc_1; // normalized value of line start point
     unsigned int n_co2_2, n_tvoc_2; // normalized value of line end point
 
@@ -112,13 +110,13 @@ void draw_graph(unsigned int *last_draw) {
         acquire_screen();
         /* Drawing of the line for CO2 graph that joins the two points that
          * have been considered */
-        fastline(screen, r_data.x_point[*last_draw], base - n_co2_1,
-                 r_data.x_point[*last_draw + 1], base - n_co2_2, GRAPH1_COLOR);
+        fastline(screen, r_data.x_point[*last_draw], GRAPH_BASE - n_co2_1,
+                 r_data.x_point[*last_draw + 1], GRAPH_BASE - n_co2_2, GRAPH1_COLOR);
 
         /* Drawing of the line for tVOC graph that joins the two points that
          * have been considered */
-        fastline(screen, r_data.x_point[*last_draw], base - n_tvoc_1,
-                 r_data.x_point[*last_draw + 1], base - n_tvoc_2, GRAPH2_COLOR);
+        fastline(screen, r_data.x_point[*last_draw], GRAPH_BASE - n_tvoc_1,
+                 r_data.x_point[*last_draw + 1], GRAPH_BASE - n_tvoc_2, GRAPH2_COLOR);
         release_screen();
     }
     pthread_mutex_unlock(&mutex_data);
