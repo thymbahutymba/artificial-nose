@@ -20,7 +20,7 @@
 #define GRAPH1_COLOR (0b1111100000000000) // red for CO2 graph
 #define GRAPH2_COLOR (0b0000011111100000) // green for tVOC gragh
 #define BKG_COLOR (0b0000000000000000)    // black for background
-#define LINE_SPACE (20)                   // space between each line of text
+#define LINE_SPACE (14)                   // space between each line of text
 
 #define COLOR_MODE (16) // Sets the pixel color format to be used
 #define CHANNELS (3)    // RGB Image
@@ -64,9 +64,9 @@
 #define SUBBOX_Y2 (SUBBOX_Y1 + G_SUBBOX)
 
 #define SXT_S (SUBBOX_X1 + INTERNAL_MARGIN) // x position of static text
-#define SYT_SCURRENT (IMAGE_Y2 + 12)        // text row for current
-#define SXT_CO2 (SXT_S + 225)               // dynamc text alignment for CO2
-#define SXT_TVOC (SXT_S + 368)              // dynamc text alignment for tVOC
+#define SYT_SCURRENT (IMAGE_Y2 + 18)        // text row for current
+#define SXT_CO2 (SXT_S + 190)               // dynamc text alignment for CO2
+#define SXT_TVOC (SXT_S + 328)              // dynamc text alignment for tVOC
 
 /*******************************************************************************
  * KEYBOAD INPUT
@@ -79,7 +79,7 @@
 #define INPUT_Y2 (INPUT_Y1 + INPUT_H)
 
 #define TEXT_X1 (INPUT_X1 + INTERNAL_MARGIN)
-#define TEXT_Y1 (INPUT_Y1 + 12)
+#define TEXT_Y1 (INPUT_Y1 + 18)
 
 /*******************************************************************************
  * GRAPH

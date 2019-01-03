@@ -34,7 +34,7 @@ int main() {
     for (index = 0; index < n_task - 1; index++)
         pthread_join(task_table[index].id, NULL);
 
-    destroy_font(font);
+    //destroy_font(font);
     return 0;
 }
 
