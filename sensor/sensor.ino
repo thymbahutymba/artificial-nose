@@ -7,52 +7,42 @@
 #define UPPER_LIMIT (65536 - RANGE)
 
 CCS811 sCCS811(CCS811_ADDR);
-uint16_t rif_co2;
-uint16_t rif_tVOC;
 
 void setup() {
     Serial.begin(115200);
-//    rif_co2 = (uint16_t)random(BOTTOM_LIMIT, UPPER_LIMIT);
-//    rif_tVOC = (uint16_t)random(BOTTOM_LIMIT, UPPER_LIMIT);
-
-    rif_co2 = 57000;
-    rif_tVOC = 61000;
-
-    /*
     CCS811Core::status returnCode = sCCS811.begin();
 
+/*
     float humidityVariable = (float)random(0, 10000) / 100;     // 0 to 100%
     float temperatureVariable = (float)random(500, 7000) / 100; // 5C to 70C
     sCCS811.setEnvironmentalData(humidityVariable, temperatureVariable);
 
     Serial.print("Begin status code: ");
-    printDriverError(returnCode);
-    Serial.println();
-    */
+*/
+    if (returnCode != CCS811Core::SENSOR_SUCCESS)
+    {
+      printDriverError(returnCode);
+      while (1); //Hang if there was a problem.
+    }
 }
 
 void loop() {
-    uint16_t co2 = rif_co2 + (uint16_t)random(0, RANGE);
-    uint16_t tVOC = rif_tVOC + (uint16_t)random(0, RANGE);
-    uint8_t s[] = {
-        (uint8_t)co2, (uint8_t)(co2 >> 8),
-        (uint8_t)tVOC, (uint8_t)(tVOC >> 8),
-      };
+  uint16_t co2, tVOC;
+  if (sCCS811.dataAvailable()) {
+    sCCS811.readAlgorithmResults();
+    co2 = sCCS811.getCO2();
+    tVOC = sCCS811.getTVOC();
 
-    // arduino as random number generator
+    uint8_t s[] = {
+      (uint8_t)co2, (uint8_t)(co2 >> 8),
+      (uint8_t)tVOC, (uint8_t)(tVOC >> 8),
+    };
     Serial.write(s, 4);
-    //Serial.print(10000);
-    /*
-    if (sCCS811.dataAvailable()) {
-        sCCS811.readAlgorithmResults();
-        co2 = sCCS811.getCO2();
-        tvoc = sCCS811.getTVOC();
-        printDebug(co2, tvoc);
-    } else if (sCCS811.checkForStatusError()) {
-        printSensorError();
-    }
-    */
-    delay(500);
+      
+  } else if (sCCS811.checkForStatusError()) {
+      printSensorError();
+  }
+  delay(500);
 }
 
 void printDebug(uint16_t co2, uint16_t tvoc) {

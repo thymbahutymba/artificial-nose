@@ -223,9 +223,9 @@ void draw_text() {
     char *txt_mode[] = {"WRITING: ", "SAVING:  "};
     // Offset among X axis for printing text input
     int x_off = strlen(txt_mode[0]) * 8;
-    char text[BUFFER_SIZE];  // Text to be printed
-    static size_t old_l = 0; // Length of previous keyboard buffer
-    size_t len;              // Difference between old and new keyboard buffer
+    char text[BUFFER_SIZE]; // Text to be printed
+    static size_t old_l = 0;    // Length of previous keyboard buffer
+    size_t len; // Difference between old and new keyboard buffer
 
     acquire_screen();
     pthread_mutex_lock(&mutex_keyboard);
@@ -237,7 +237,7 @@ void draw_text() {
     len = old_l - strlen(keyboard_buf);
 
     // The new length of keyboard buffer is less than the previous one
-    if (len > 0)
+    if (len > 0 && len < BUFFER_SIZE)
         sprintf(text, "%s%*s", keyboard_buf, (int)len, " ");
     else
         sprintf(text, "%s", keyboard_buf);

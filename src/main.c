@@ -7,7 +7,8 @@
 int main() {
     size_t index;
 
-    Task task_table[] = {{-1, simulate_sensor_task, 25, 300},
+    Task task_table[] = {{-1, read_from_sensor_task, 25, 300},
+                         /*{-1, simulate_sensor_task, 25, 300},*/
                          {-1, graphic_task, 30, 20},
                          {-1, neural_network_task, 20, 1000},
                          {-1, keyboard_task, 30, 15}};
@@ -34,7 +35,6 @@ int main() {
     for (index = 0; index < n_task - 1; index++)
         pthread_join(task_table[index].id, NULL);
 
-    //destroy_font(font);
     return 0;
 }
 
