@@ -1,24 +1,32 @@
 CC = gcc
-LDFLAGS = -pthread -lrt
-CFLAGS = -Wall -Wextra
-ALLEGRO =  `allegro-config --libs`
-OBJECTS = sensor.o interface.o main.o ptask.o
-DOCKERFLAGS = -it --rm --privileged --cap-add=sys_nice -e DISPLAY="10.10.10.10:0.0"
+BIN = main
 
-all: $(OBJECTS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o main $^ $(ALLEGRO)
+SRC_DIR = src
+OBJ_DIR = obj
+INC_DIR = include
 
-%.o : %.c
+SRC = $(wildcard $(SRC_DIR)/*.c)
+OBJ = $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+
+ALLEGRO = `allegro-config --libs`
+LDFLAGS = -pthread -lrt -ltensorflow
+CFLAGS += -Wall -Wextra -I$(INC_DIR)
+
+all: $(BIN)
+
+$(BIN): $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(ALLEGRO)
+
+$(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean:
-	rm *.o
+	rm $(OBJ_DIR)/*.o
 	rm main
 
-docker: build run
-
-build:
-	docker build --rm -f "Dockerfile" -t artificial-nose:latest .
-
-run:
-	docker run $(DOCKERFLAGS) artificial-nose ./main
+retrain:
+	python3 retrain.py \
+		--image_dir=image_neural_network \
+		--output_graph graph.pb \
+		--output_labels labels.txt \
+		--how_many_training_steps 500
