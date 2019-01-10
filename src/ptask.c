@@ -1,6 +1,6 @@
-#include "ptask.h"
+/* Functions taken from slides */
 
-/* Function from slides */
+#include "ptask.h"
 
 /* Add ms to time */
 void time_add_ms(struct timespec *t, int ms) {

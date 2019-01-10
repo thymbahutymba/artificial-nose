@@ -10,6 +10,10 @@
 #define BOTTOM_LIMIT (0)
 #define UPPER_LIMIT (65536) // 1 << 16 (MODE) -> 1 << MODE
 
+// Distance between values along abscissa
+#define OFFSET ((int)((GRAPH_WIDTH - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT))
+#define SERIAL_PORT ("/dev/ttyACM0") // Path to serial port
+
 // Reference values ​​for each class for which the neural network has been trained
 #ifdef A
 #define R_CO2 (50000)

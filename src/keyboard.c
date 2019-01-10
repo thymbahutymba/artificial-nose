@@ -7,7 +7,9 @@ void get_keycodes(char *scan, char *ascii) {
     *scan = k >> 8;
 }
 
-/* Check the pressed key and do accordingly */
+/* Check the pressed key and do accordingly. The key accepted in writing mode
+ * are the letters from a to Z, numbers, minus and point, other characters are
+ * ignored */
 void handle_key(Task *t_img, char scan, char ascii, unsigned int *i_key) {
     char path2save[BUFFER_SIZE + strlen(PATH_I_NN)];
 
@@ -52,15 +54,19 @@ void handle_key(Task *t_img, char scan, char ascii, unsigned int *i_key) {
  * WRITING and to activate task to store the images. */
 void *keyboard_task(void *period) {
     struct timespec t;
-    char scan, ascii;
+    char scan;              // Scan code of key pressed
+    char ascii;             // Ascii of key pressed
     unsigned int i_key = 0; // last char inserted in buffer
 
     // Storing task when the mode is SAVING
     Task t_img = {-1, store_image_task, 20, 500};
 
     pthread_mutex_init(&mutex_keyboard, NULL);
+
+    // Keyboard inizialization
     install_keyboard();
 
+    // Starts in writing mode
     pthread_mutex_lock(&mutex_keyboard);
     cur_mode = WRITING;
     pthread_mutex_unlock(&mutex_keyboard);
