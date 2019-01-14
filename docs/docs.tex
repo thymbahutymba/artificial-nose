@@ -1,16 +1,16 @@
 \documentclass[12pt]{article}
 \usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
 \usepackage{graphicx}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{hyperref}
 
 \title{Artificial Nose}
 \author{Luca Belluardo e Andrea Stevanato}
 \date{\today}
 
 \begin{document}
-
-\maketitle
 
 \section{Introduction}
 In this project a real-time application is developed to recognize smells from an
@@ -20,9 +20,9 @@ The rest of the documentation is structured in the following way: in section
 2 the tasks are explained one at a time, in the section 3...
 
 \section{The tasks}
-In our application we have 7 periodic tasks (\ref{tdiagram}): graphic task, sensor task,
-neural network task (made with Tensorflow), keyboard task and the store image
-task.
+In our application we have 5 periodic tasks (Figure \ref{tdiagram}): graphic
+task, sensor task, neural network task (made with Tensorflow), keyboard task
+and the store image task.
 
 The main function sets everything up for the tasks, except for the store
 image task. The keyboard task is in charge to execute the store image task
@@ -45,12 +45,12 @@ the \texttt{ESC} key.
 \end{figure}
 
 \subsection{Main function}
-In the main function(algorithm \ref{main}) all the tasks, except the store image task, are started
-and the mutexes initialized. The mutexes are two, one for the data readed
-from the sensor and the other for the results given by the neural network. 
-The main also starts allegro and waits for the termination of the keyboard task.
-Once the keyboard task terminates the main cancels all other task and wait for
-their termination.
+In the main function [\ref{main}] all the tasks, except the store image task,
+are started and the mutexes initialized. The mutexes are two, one for the
+data readed from the sensor and the other for the results given by the neural
+network. The main also starts allegro and waits for the termination of the
+keyboard task. Once the keyboard task terminates the main cancels all other
+task and wait for their termination.
 
 \begin{algorithm}[t]
 \caption{Main}
@@ -58,16 +58,16 @@ their termination.
 
 \begin{algorithmic}
 \State $T\gets$ \textit{tasks to be started}
-\State \textit{Mutexes and allegro inizialization}
+\State Mutexes and allegro initialization
 \For{$t \in T$}
-    \State \textit{start} $t$
+    \State start $t$
 \EndFor
 
 \Loop{ \textit{wait for termination of keyboard task}}
 \EndLoop
 
 \For{$t \in T$} 
-    \State \textit{cancel and join} $t$
+    \State cancel and join $t$
 \EndFor
 
 \end{algorithmic}
@@ -75,7 +75,149 @@ their termination.
 
 \subsection{Graphic Task}
 
-The graphic task is the one in charge to print the interface of our application.
+The graphic task prints the interface of our application. The
+interface is divided into different areas that contains for each one the
+graph, the image, the results, the legend, the current values and the current
+status (\texttt{WRITING} or \texttt{SAVING}) followed by, if present, the
+keyboard input.
 
+\begin{algorithm}[t]
+\caption{Graphic task}
+\label{graphic}
+\begin{algorithmic}
+\State $p\gets$ \textit{task period}
+\State set activation task
+\State draw interface background
+
+\Loop
+\State draw graph
+\State draw image
+\State draw results given by neural network
+\State draw current values readed from sensor
+\State draw keyboard input
+\State wait for next activation
+\EndLoop
+
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Sensor task}
+The sensor task [\ref{sensortask}] reads the values from the arduino which it
+sends on serial port the values given by the sensor. The readed values are
+stored into an array and used by the graphic task to draw the image and the
+graph; the current readed values are also standalone printed by the graphic
+task.
+
+\begin{algorithm}[t]
+\caption{Sensor task}
+\label{sensortask}
+
+\begin{algorithmic}
+\State $p\gets$ \textit{task period}
+\State initialization $data\_q$
+\State initialization serial port
+\State set activation task
+
+\Loop
+\State $data\_q\gets data\_q$ + values readed from sensor
+\State wait for next activation
+\EndLoop
+
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Neural network task}
+The neural network task [\ref{nntask}] recognizes the smells using the
+current image created with the value sampled from sensor.
+
+\begin{algorithm}[t]
+\caption{Neural network task}
+\label{nntask}
+
+\begin{algorithmic}
+\State $p\gets$ \textit{task period}
+\State Tensorflow initialization
+\State set activation task
+
+\Loop
+\State $image\gets$ current image
+\State $results\gets$ use neural network with given $image$
+\State wait for next activation
+\EndLoop
+
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Keyboard task}
+The keyboard task [\ref{ktask}] takes input from keyboard and
+put it into \textit{keyboard buffer}. The keyboard buffer is printed by the
+graphic task in its area of interface. The string contained into keyboard
+buffer is the directory, under \textit{image\_neural\_network}, where the
+images are saved by the store image task. The keyboard task shall be in two
+different mode: \texttt{WRITING} or \texttt{SAVING}. The task is started in
+\texttt{WRITING} mode. During this mode it's possible to write the name of
+the directory in which the images are saved. The name can contain letters,
+numbers, minus, underscore and point; it's also possible to delete the written
+characters pressing the \texttt{BACKSPACE} key. Pressing the
+\texttt{ENTER} key, the current mode is switched from the \texttt{WRITING} to
+the \texttt{SAVING} mode or vice versa. When the \texttt{ESC} key is pressed the 
+task terminate causing the closing of our application.
+
+\begin{algorithm}[t]
+\caption{Keyboard task}
+\label{ktask}
+
+\begin{algorithmic}
+\State $p\gets$ \textit{task period}
+\State $cur\_mode\gets$ \texttt{WRITING}
+\State create \textit{key\_buffer}
+\State keyboard initialization
+\State set activation task
+
+\Repeat
+\State $key\_pressed\gets$ key code from keyboard
+\If {$key\_pressed$ == \texttt{ENTER}}
+    \If {$cur\_mode$ == \texttt{WRITING}}
+    \State $cur\_mode\gets$ \texttt{SAVING}
+    \State start store image task
+    \Else
+    \State $cur\_mode\gets$ \texttt{WRITING}
+    \State stop store image task and clean key\_buffer
+    \EndIf
+\ElsIf {$cur\_mode$ == \texttt{WRITING}}
+    \If {$key\_pressed$ equal to letter, number, minus or point \textbf{and} \textit{key\_buffer} not full}
+        \State \textit{key\_buffer} $\gets$ \textit{key\_buffer} + $key\_pressed$ 
+    \ElsIf {\textit{key\_buffer} == \texttt{BACKSPACE} \textbf{and} \textit{key\_buffer} not empty}
+        \State remove last element from \textit{key\_buffer}
+    \EndIf
+\EndIf
+
+\Until {$key\_pressed$ != \texttt{ESC}}
+
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Store image task}
+The store image task [\ref{sitask}] is activated/terminated by keyboard task
+when the \texttt{ENTER} key is pressed. Once the task is activated the image
+are saved every $300$ milliseconds. The images saved by this task are used to
+train the neural network for the recognizing of smells.
+
+\begin{algorithm}[t]
+\caption{Store image task}
+\label{sitask}
+
+\begin{algorithmic}
+\State $p\gets$ \textit{task period}
+\State $dir\gets$ \textit{path to directory where images are saved}
+\State set activation task
+
+\Loop
+\State save image to $dir$
+\State wait for next activation
+\EndLoop
+
+\end{algorithmic}
+\end{algorithm}
 
 \end{document}
