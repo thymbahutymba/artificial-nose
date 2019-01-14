@@ -12,6 +12,9 @@
 
 \begin{document}
 
+\maketitle
+\tableofcontents
+
 \section{Introduction}
 In this project a real-time application is developed to recognize smells from an
 artificial nose. The sensor used for the application is an air quality gas sensor.
@@ -219,5 +222,17 @@ train the neural network for the recognizing of smells.
 
 \end{algorithmic}
 \end{algorithm}
+
+\section{Creation image}
+The image is created from the values readed from the sensor. The allegro color 
+mode is set to 16 bits. In the 16 bits mode 5 bits are for the red and blue 
+values e 6 bits for the green value. 
+
+The sensor samples two data, the CO2 and the tVOC. Each value is a 16-bit number
+and so we represent the values readed as colors in 16-bit. The image is splitted
+in two parts, left and right. In the left side we draw the CO2 and in the right 
+the tVOC.
+
+\section{}
 
 \end{document}
