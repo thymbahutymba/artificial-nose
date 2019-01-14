@@ -19,8 +19,9 @@ void time_copy(struct timespec *t_dst, struct timespec t_src) {
 }
 
 /* Suspend task until new activation */
-void wait_for_activation(struct timespec *t, int p) {
+void wait_for_activation(struct timespec *t, struct timespec *dl, int p) {
     clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, t, NULL);
+    time_add_ms(dl, p);
     time_add_ms(t, p);
 }
 
@@ -43,6 +44,23 @@ int time_cmp(struct timespec t1, struct timespec t2) {
     return 0;
 }
 
+/* Check for deadline miss */
+int deadline_miss(struct timespec dl) {
+    struct timespec now;
+
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    if (time_cmp(now, dl) > 0) {
+        return 1;
+    }
+
+    return 0;
+}
+
+/* Check for deadline miss and print if something goes wrong */
+void check_deadline(struct timespec *dl, size_t index) {
+    task_table[index].dmiss += deadline_miss(*dl);
+}
+
 /* Create new thread with parameter of task */
 int task_create(Task *t) {
     pthread_attr_t attr;
@@ -50,10 +68,10 @@ int task_create(Task *t) {
 
     pthread_attr_init(&attr);
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
-    pthread_attr_setschedpolicy(&attr, SCHED_RR);
+    pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
 
     param.sched_priority = (*t).priority;
     pthread_attr_setschedparam(&attr, &param);
 
-    return pthread_create(&(*t).id, &attr, (*t).f, (void *)&t->period);
+    return pthread_create(&(*t).id, &attr, (*t).f, NULL);
 }

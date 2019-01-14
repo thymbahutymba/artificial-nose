@@ -18,6 +18,8 @@ mode cur_mode;                  // Current application mode
 
 pthread_mutex_t mutex_keyboard; // Mutex for keyboard_buf and cur_mode
 
-void *keyboard_task(void *);
+extern Task task_table[];
+
+void *keyboard_task();
 
 #endif // KEYBOARD_H

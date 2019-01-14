@@ -37,8 +37,9 @@ int serial_init(struct termios *options) {
     return port;
 }
 
-void *read_from_sensor_task(void *period) {
-    struct timespec t;
+void *read_from_sensor_task() {
+    struct timespec t;  // Time refering the period
+    struct timespec dl; // Time refering the deadline
     struct termios options; // Options for correctly configure the serial port
     int port;               // Id to serial port
     uint8_t var[4];         // Value sampled from sensor
@@ -49,7 +50,8 @@ void *read_from_sensor_task(void *period) {
     // Initialize x values of the queue
     init_queue();
 
-    set_activation(&t, *((int *)period));
+    set_activation(&t, task_table[RS_I].period);
+    set_activation(&dl, task_table[RS_I].period);
 
     while (1) {
         pthread_mutex_lock(&mutex_data);
@@ -65,29 +67,7 @@ void *read_from_sensor_task(void *period) {
         r_data.top = (r_data.top + 1) % GRAPH_ELEMENT;
         pthread_mutex_unlock(&mutex_data);
 
-        wait_for_activation(&t, *((int *)period));
-    }
-}
-
-/* Task that simulates the behaviour of sensor */
-void *simulate_sensor_task(void *period) {
-    struct timespec t;
-
-    set_activation(&t, *((int *)period));
-
-    // Reference values
-    const uint16_t v_rif_1 = R_CO2;
-    const uint16_t v_rif_2 = R_TVOC;
-
-    init_queue();
-
-    while (1) {
-        pthread_mutex_lock(&mutex_data);
-        r_data.co2[r_data.top] = v_rif_1 + (rand() % (RANGE));
-        r_data.tvoc[r_data.top] = v_rif_2 + (rand() % (RANGE));
-        r_data.top = (r_data.top + 1) % GRAPH_ELEMENT;
-        pthread_mutex_unlock(&mutex_data);
-
-        wait_for_activation(&t, *((int *)period));
+        check_deadline(&dl, RS_I);
+        wait_for_activation(&t, &dl, task_table[RS_I].period);
     }
 }

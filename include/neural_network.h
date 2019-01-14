@@ -42,6 +42,8 @@ typedef short unsigned int img_t; // Type of value for each pixel of image
 float *result;
 pthread_mutex_t mutex_res;
 
-void *neural_network_task(void *);
+extern Task task_table[];
+
+void *neural_network_task();
 
 #endif // NEURAL_NETWORK_H

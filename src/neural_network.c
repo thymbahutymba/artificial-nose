@@ -194,8 +194,9 @@ void tf_init(TF_Graph **graph, TF_Status **status, TF_Session **session,
     arguments->out_vals = *out_vals;
 }
 
-void *neural_network_task(void *period) {
-    struct timespec t;
+void *neural_network_task() {
+    struct timespec t;        // Time refering the period
+    struct timespec dl;       // Time refering the deadline
     struct args arguments;    // Arguments for deallocation tensorflow stuff
     TF_Graph *graph = NULL;   // Graph associated to session
     TF_Status *status = NULL; // Result status of tensorflow execution
@@ -205,17 +206,19 @@ void *neural_network_task(void *period) {
 
     tf_init(&graph, &status, &sess, &sess_opts, &arguments, &out_vals);
 
-    // Not needed i guess, but still remain here for a while
-    // pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    // Set cancel mode as asynchronous
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
     // Push the routine that is executed after receiving cancellation request
     pthread_cleanup_push(&tf_exit, &arguments);
 
-    set_activation(&t, *(int *)period);
+    set_activation(&t, task_table[NN_I].period);
+    set_activation(&dl, task_table[NN_I].period);
 
     while (1) {
         run_session(sess, graph, status, out_vals);
-        wait_for_activation(&t, *(int *)period);
+        check_deadline(&dl, NN_I);
+        wait_for_activation(&t, &dl, task_table[NN_I].period);
     }
 
     pthread_cleanup_pop(1);

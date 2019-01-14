@@ -239,6 +239,8 @@ typedef struct {
 Queue r_data; // data readed by sensor and printed by graphich task
 pthread_mutex_t mutex_data;
 
+extern Task task_table[];
+
 void *graphic_task();
 void *store_image_task();
 void init_interface();

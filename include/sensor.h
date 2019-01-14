@@ -32,6 +32,8 @@
 #define R_TVOC (60000)
 #endif
 
+extern Task task_table[];
+
 void *simulate_sensor_task();
 void *read_from_sensor_task();
 

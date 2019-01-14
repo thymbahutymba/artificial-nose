@@ -52,14 +52,12 @@ void handle_key(Task *t_img, char scan, char ascii, unsigned int *i_key) {
 
 /* Periodic task to read input by keyboard, to switch mode between SAVING and
  * WRITING and to activate task to store the images. */
-void *keyboard_task(void *period) {
-    struct timespec t;
+void *keyboard_task() {
+    struct timespec t;      // Time refering the period
+    struct timespec dl;     // Time refering the deadline
     char scan;              // Scan code of key pressed
     char ascii;             // Ascii of key pressed
     unsigned int i_key = 0; // last char inserted in buffer
-
-    // Storing task when the mode is SAVING
-    Task t_img = {-1, store_image_task, 20, 500};
 
     pthread_mutex_init(&mutex_keyboard, NULL);
 
@@ -71,7 +69,8 @@ void *keyboard_task(void *period) {
     cur_mode = WRITING;
     pthread_mutex_unlock(&mutex_keyboard);
 
-    set_activation(&t, *((int *)period));
+    set_activation(&t, task_table[K_I].period);
+    set_activation(&dl, task_table[K_I].period);
 
     while (1) {
         // Get the key pressed from keyboard
@@ -81,8 +80,9 @@ void *keyboard_task(void *period) {
         if (scan == KEY_ESC)
             return NULL;
         else
-            handle_key(&t_img, scan, ascii, &i_key);
+            handle_key(&task_table[SI_I], scan, ascii, &i_key);
 
-        wait_for_activation(&t, *((int *)period));
+        check_deadline(&dl, K_I);
+        wait_for_activation(&t, &dl, task_table[K_I].period);
     }
 }

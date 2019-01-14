@@ -298,27 +298,35 @@ void draw_histogram() {
 
 /* Periodic task manually activated for images storing in specific directory
  * created in writing mode. */
-void *store_image_task(void *period) {
-    struct timespec t;
+void *store_image_task() {
+    struct timespec t;            // Time refering the period
+    struct timespec dl;           // Time refering the deadline
     unsigned int index_image = 0; // Counter of saved images
 
-    set_activation(&t, *((int *)period));
+
+    set_activation(&t, task_table[SI_I].period);
+    set_activation(&dl, task_table[SI_I].period);
 
     while (1) {
         // Save image in its directory
         save_image(index_image++);
-        wait_for_activation(&t, *((int *)period));
+
+        check_deadline(&dl, SI_I);
+        wait_for_activation(&t, &dl, task_table[SI_I].period);
     }
 }
 
 /* Periodic task for the drawing of image, graph, information sampled from
  * sensor and text acquried from keyboard */
-void *graphic_task(void *period) {
-    struct timespec t;
+void *graphic_task() {
+    struct timespec t;         // Time refering the period
+    struct timespec dl;        // Time refering the deadline
     unsigned int ld_image = 0; // Index of last drawn element into image section
     unsigned int ld_graph = 0; // Index of last drawn element into graph section
 
-    set_activation(&t, *((int *)period));
+
+    set_activation(&t, task_table[G_I].period);
+    set_activation(&dl, task_table[G_I].period);
 
     draw_background();
 
@@ -337,6 +345,8 @@ void *graphic_task(void *period) {
 
         // Prints the results computed by neural network
         draw_results();
-        wait_for_activation(&t, *((int *)period));
+
+        check_deadline(&dl, G_I);
+        wait_for_activation(&t, &dl, task_table[G_I].period);
     }
 }
