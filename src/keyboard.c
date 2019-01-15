@@ -59,8 +59,6 @@ void *keyboard_task() {
     char ascii;             // Ascii of key pressed
     unsigned int i_key = 0; // last char inserted in buffer
 
-    pthread_mutex_init(&mutex_keyboard, NULL);
-
     // Keyboard inizialization
     install_keyboard();
 

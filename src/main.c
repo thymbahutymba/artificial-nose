@@ -16,6 +16,7 @@ int main() {
 
     pthread_mutex_init(&mutex_data, NULL);
     pthread_mutex_init(&mutex_res, NULL);
+    pthread_mutex_init(&mutex_keyboard, NULL);
 
     mkdir(PATH_I_NN, 0755);
     init_interface();
