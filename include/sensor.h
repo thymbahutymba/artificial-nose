@@ -6,9 +6,8 @@
 #include <termios.h>
 
 // Range between which the reference value can fluctuate
-#define RANGE (512) // 1 << 11
 #define BOTTOM_LIMIT (0)
-#define UPPER_LIMIT (65536) // 1 << 16 (MODE) -> 1 << MODE
+#define UPPER_LIMIT (8192) 
 
 // Distance between values along abscissa
 #define OFFSET ((int)((GRAPH_WIDTH - INTERNAL_MARGIN * 2) / GRAPH_ELEMENT))

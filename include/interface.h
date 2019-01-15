@@ -14,15 +14,15 @@
 #define SCREEN_HEIGHT (768)               // height of the window
 #define EXTERNAL_MARGIN (5)               // space between sections borders
 #define INTERNAL_MARGIN (8)               // internal section space
-#define BORDER_COLOR (0b1111111111100000) // yellow color for border section
-#define MAIN_COLOR (0b1111100000000000)   // red for title
-#define TEXT_COLOR (0b1111111111111111)   // white for text color
-#define GRAPH1_COLOR (0b1111100000000000) // red for CO2 graph
-#define GRAPH2_COLOR (0b0000011111100000) // green for tVOC gragh
-#define BKG_COLOR (0b0000000000000000)    // black for background
+#define BORDER_COLOR (0b111111111100000) // yellow color for border section
+#define MAIN_COLOR (0b111110000000000)   // red for title
+#define TEXT_COLOR (0b111111111111111)   // white for text color
+#define GRAPH1_COLOR (0b111110000000000) // red for CO2 graph
+#define GRAPH2_COLOR (0b000001111100000) // green for tVOC gragh
+#define BKG_COLOR (0)    // black for background
 #define LINE_SPACE (14)                   // space between each line of text
 
-#define COLOR_MODE (16) // Sets the pixel color format to be used
+#define COLOR_MODE (15) // Sets the pixel color format to be used
 #define CHANNELS (3)    // RGB Image
 
 // Number of element that it's sampled by sensor
