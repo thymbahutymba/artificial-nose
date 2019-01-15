@@ -54,9 +54,12 @@ void draw_background() {
                    LTEXT_Y + LINE_SPACE * (i + 1), TEXT_COLOR, BKG_COLOR);
 
     // Prints the text where will be displayed CO2 and tVOC values
-    textout_ex(screen, font, "Current value:     CO2:            tVOC:", SXT_S,
-               SYT_SCURRENT, TEXT_COLOR, BKG_COLOR);
-
+    textout_ex(screen, font, "Current value:", SXT_S, SYT_SCURRENT, TEXT_COLOR,
+               BKG_COLOR);
+    textout_ex(screen, font, "CO2:", SXT_CO2_TEXT, SYT_SCURRENT, GRAPH1_COLOR,
+               BKG_COLOR);
+    textout_ex(screen, font, "tVOC:", SXT_TVOC_TEXT, SYT_SCURRENT, GRAPH2_COLOR,
+               BKG_COLOR);
     release_screen();
 }
 
@@ -303,7 +306,6 @@ void *store_image_task() {
     struct timespec dl;           // Time refering the deadline
     unsigned int index_image = 0; // Counter of saved images
 
-
     set_activation(&t, task_table[SI_I].period);
     set_activation(&dl, task_table[SI_I].period);
 
@@ -323,7 +325,6 @@ void *graphic_task() {
     struct timespec dl;        // Time refering the deadline
     unsigned int ld_image = 0; // Index of last drawn element into image section
     unsigned int ld_graph = 0; // Index of last drawn element into graph section
-
 
     set_activation(&t, task_table[G_I].period);
     set_activation(&dl, task_table[G_I].period);

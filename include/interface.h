@@ -164,8 +164,10 @@
 
 #define SXT_S (SUBBOX_X1 + INTERNAL_MARGIN) // x position of static text
 #define SYT_SCURRENT (IMAGE_Y2 + 18)        // text row for current
-#define SXT_CO2 (SXT_S + 190)               // dynamc text alignment for CO2
-#define SXT_TVOC (SXT_S + 328)              // dynamc text alignment for tVOC
+#define SXT_CO2 (SXT_S + 190)       // dynamc text alignment for CO2 value
+#define SXT_TVOC (SXT_S + 328)      // dynamc text alignment for tVOC value
+#define SXT_CO2_TEXT (SXT_S + 152)  // dynamc text alignment for CO2 text
+#define SXT_TVOC_TEXT (SXT_S + 280) // dynamc text alignment for tVOC text
 
 /*******************************************************************************
  * KEYBOAD INPUT
