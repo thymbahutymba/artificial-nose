@@ -5,6 +5,7 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{hyperref}
+\usepackage{listings}
 
 \title{Artificial Nose}
 \author{Luca Belluardo e Andrea Stevanato}
@@ -13,7 +14,6 @@
 \begin{document}
 
 \maketitle
-\tableofcontents
 
 \section{Introduction}
 In this project a real-time application is developed to recognize smells from an
@@ -28,8 +28,14 @@ In our application we have 5 periodic tasks (Figure \ref{tdiagram}): graphic
 task, sensor task, neural network task (made with Tensorflow), keyboard task
 and the store image task.
 
+\begin{figure}[!b]
+    \includegraphics[width=\textwidth]{diagram.pdf}
+    \caption{Task diagram}
+    \label{tdiagram}
+\end{figure}
+
 The main function sets everything up for the tasks, except for the store
-image task. The keyboard task is in charge to execute the store image task
+image task. The keyboard task is in charge to activate the store image task
 when the \texttt{ENTER} key is pressed. If the store image task is already in
 execution and the \texttt{ENTER} key is pressed this it's terminated.
 Before start the store image task it's possible to write the name of the
@@ -38,25 +44,19 @@ images will be saved into \textit{image\_neural\_network} directory.
 
 The sensor is readed by an Arduino M0 pro; the sampled data readed by arduino
 are sent via the serial port to our application and readed by the sensor
-task. All the tasks are terminated by the keyboard task when the user presses
-the \texttt{ESC} key.
-
-\begin{figure}[!t]
-    \includegraphics[width=\textwidth]{diagram.pdf}
-    \caption{Task diagram}
-    \label{tdiagram}
-\end{figure}
+task. All the tasks are terminated by the main when the user presses the
+\texttt{ESC} key.
 
 \subsection{Main function}
 In the main function [\ref{main}] all the tasks, except the store image task,
 are started and the mutexes initialized. The mutexes are three, one for the
-data readed from the sensor, one for the results given by the neural
-network and one for the buffer that contains the keyboard input. The main also 
-starts allegro and waits for the termination of the
+buffer that contains the values readed from the sensor, one for the results
+given by the neural network and one for the buffer that contains the keyboard
+input. The main also starts allegro and waits for the termination of the
 keyboard task. Once the keyboard task terminates the main cancels all other
 task and wait for their termination.
 
-\begin{algorithm}[t]
+\begin{algorithm}[b]
 \caption{Main}
 \label{main}
 
@@ -79,64 +79,23 @@ task and wait for their termination.
 
 \subsection{Graphic Task}
 
-The graphic task prints the interface of our application. The
-interface is divided into different areas that contains for each one the
-graph (Figure \ref{graph}), the image (Figure \ref{image}), the results (Figure \ref{results}), the legend (Figure \ref{legend}), the current values (Figure \ref{values}) and the current
-status (\texttt{WRITING} (Figure \ref{writing}) or \texttt{SAVING} (Figure \ref{saving})) followed by, if present, the
-keyboard input.
+The graphic task [\ref{graphic}] prints the interface (Figure
+\ref{interface}) of our application. The interface is divided into different
+areas which contains for each one: the graph, the image, the results, the
+legend, the current values and the current status (\texttt{SAVING} or
+\texttt{WRITING}) followed by, if present, the keyboard input.
 
-\begin{figure}[!t]
+\begin{figure}[H]
     \centering
-    \includegraphics[scale=0.75]{graph.png}
-    \caption{Graph}
-    \label{graph}
+    \includegraphics[width=\textwidth]{images/interface.png}
+    \caption{Interface of application}
+    \label{interface}
 \end{figure}
 
-\begin{figure}[!t]
-    \centering
-    \includegraphics[scale=0.75]{image.png}
-    \caption{Image}
-    \label{image}
-\end{figure}
-
-\begin{figure}[!t]
-    \centering
-    \includegraphics[scale=0.75]{results.png}
-    \caption{Result}
-    \label{results}
-\end{figure}
-
-\begin{figure}[!t]
-    \centering
-    \includegraphics[scale=0.75]{legend.png}
-    \caption{Legend}
-    \label{legend}
-\end{figure}
-
-\begin{figure}[!t]
-    \centering
-    \includegraphics[scale=0.75]{values.png}
-    \caption{Current values}
-    \label{values}
-\end{figure}
-
-\begin{figure}[!t]
-    \centering
-    \includegraphics[scale=0.75]{saving.png}
-    \caption{Saving mode}
-    \label{saving}
-\end{figure}
-
-\begin{figure}[!t]
-    \centering
-    \includegraphics[scale=0.75]{writing.png}
-    \caption{Writing mode}
-    \label{writing}
-\end{figure}
-
-\begin{algorithm}[t]
+\begin{algorithm}[H]
 \caption{Graphic task}
 \label{graphic}
+
 \begin{algorithmic}
 \State $p\gets$ \textit{task period}
 \State set activation task
@@ -154,14 +113,84 @@ keyboard input.
 \end{algorithmic}
 \end{algorithm}
 
+\subsubsection*{Graph}
+The graph (Figure \ref{graph}) is made with the values sampled from the 
+sensor. These values are plotted with two different colors: red for the $CO2$
+and green for the $tVOC$. The graph contains at most $N$ readings of both values.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.60]{images/graph.png}
+    \caption{Graph }
+    \label{graph}
+\end{figure}
+
+\subsubsection*{Image}
+The image (Figure \ref{image}) is made with the last $N$ values sampled from
+the sensor. The allegro color mode is set to 15-bit. In the 15-bit mode each
+color is represented by 5-bit.
+
+The sensor samples two data, the CO2 and the tVOC. Each value is a 15-bit
+number and so we represent the values readed as colors in 15-bit. The image
+is divided in two parts, left and right. In the left side we draw the CO2
+and in the right the tVOC. Even if each value could be potentially from $0$ to 
+$2^{16}$ the CO2 value is between $400$ and $8192$ and the tVOC value is between
+$0$ and $1187$. These infomations are taken from the datasheet of sensor.
+
+Whenever a new pair of values are readed from the sensor, the image is moved
+one line below, removing one line at the bottom of the image and adding the
+new line, which contains the new values, on the top of the image.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.60]{images/image.png}
+    \caption{Image}
+    \label{image}
+\end{figure}
+
+\subsubsection*{Results}
+This area shows the results (Figure \ref{results}) of neural network having
+the current image as input. The lines represent the classes for which the
+neural network was trained and the values are the neural network output.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.60]{images/results.png}
+    \caption{Result}
+    \label{results}
+\end{figure}
+
+\subsubsection*{Current values}
+This area shows the current values (Figure \ref{values}) sampled from the sensor.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.75]{images/values.png}
+    \caption{Current values}
+    \label{values}
+\end{figure}
+
+\subsubsection*{Current status}
+This area (Figure \ref{save_write}) gives the information about the current
+mode, printed on the left side; on the right side there is the name of the
+directory in which the image are saved.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[scale=0.75]{images/saving.png}
+    \includegraphics[scale=0.75]{images/writing.png}
+    \caption{Saving and writing mode}
+    \label{save_write}
+\end{figure}
+
 \subsection{Sensor task}
-The sensor task [\ref{sensortask}] reads the values from the arduino which it
-sends on serial port the values given by the sensor. The readed values are
+The sensor task [\ref{sensortask}] reads the values from the arduino which
+sends on serial port the values taken from the sensor. The readed values are
 stored into an array and used by the graphic task to draw the image and the
 graph; the current readed values are also standalone printed by the graphic
 task.
 
-\begin{algorithm}[t]
+\begin{algorithm}[H]
 \caption{Sensor task}
 \label{sensortask}
 
@@ -180,10 +209,10 @@ task.
 \end{algorithm}
 
 \subsection{Neural network task}
-The neural network task [\ref{nntask}] recognizes the smells using the
-current image created with the value sampled from sensor.
+The neural network task [\ref{nntask}] recognizes the smells using as input the
+current image created with the values sampled by the sensor.
 
-\begin{algorithm}[t]
+\begin{algorithm}[H]
 \caption{Neural network task}
 \label{nntask}
 
@@ -202,21 +231,21 @@ current image created with the value sampled from sensor.
 \end{algorithm}
 
 \subsection{Keyboard task}
-The keyboard task [\ref{ktask}] takes input from keyboard and
-put it into \textit{keyboard buffer}. The keyboard buffer is printed by the
-graphic task in its area of interface. The string contained into keyboard
-buffer is the directory, under \textit{image\_neural\_network}, where the
-images are saved by the store image task. The keyboard task shall be in two
-different mode: \texttt{WRITING} or \texttt{SAVING}. The task is started in
-\texttt{WRITING} mode. During this mode it's possible to write the name of
-the directory in which the images are saved. The name can contain letters,
-numbers, minus, underscore and point; it's also possible to delete the written
-characters pressing the \texttt{BACKSPACE} key. Pressing the
-\texttt{ENTER} key, the current mode is switched from the \texttt{WRITING} to
-the \texttt{SAVING} mode or vice versa. When the \texttt{ESC} key is pressed the
-task terminate causing the closing of our application.
+The keyboard task [\ref{ktask}] takes input from keyboard and puts it into
+\textit{keyboard buffer}. The keyboard buffer is printed by the graphic task
+in its area of interface. The string contained into keyboard buffer is the
+directory, under \textit{image\_neural\_network}, where the images are saved
+by the store image task. The keyboard task can be in two different mode:
+\texttt{WRITING} or \texttt{SAVING}. The task is started in \texttt{WRITING}
+mode. During this mode it's possible to write the name of the directory in
+which the images are saved. The name can contain letters, numbers, minus,
+underscore and point; it's also possible to delete the written characters
+pressing the \texttt{BACKSPACE} key. Pressing the \texttt{ENTER} key, the
+current mode is switched from the \texttt{WRITING} to the \texttt{SAVING}
+mode or vice versa. When the \texttt{ESC} key is pressed the keyboard task
+terminates causing the closing of our application.
 
-\begin{algorithm}[t]
+\begin{algorithm}[H]
 \caption{Keyboard task}
 \label{ktask}
 
@@ -256,7 +285,7 @@ when the \texttt{ENTER} key is pressed. Once the task is activated the image
 are saved every $300$ milliseconds. The images saved by this task are used to
 train the neural network for the recognizing of smells.
 
-\begin{algorithm}[t]
+\begin{algorithm}[H]
 \caption{Store image task}
 \label{sitask}
 
@@ -274,42 +303,39 @@ train the neural network for the recognizing of smells.
 \end{algorithm}
 
 \subsection{Scheduling}
+In our application a task table (Listing \ref{ttable}) was created containing
+all the task that have to be started by the main function. The parameters
+that characterize a task are respectively: thread identifier, function to be
+execute, priority, period and deadline miss. At the beginning the thread
+identifier is set to $-1$, once the task is activated the thread identifier
+is updated. In case of deadline misses the application increments the
+corresponding value on the task table. The real time scheduling algorithm
+chosen is \texttt{SCHED\_RR}. The deadline corresponds with the period.
+
+\begin{lstlisting}[caption={Task table}, captionpos=b, label={ttable}]
+Task task_table[] = {
+    {-1, store_image_task, 20, 1000, 0},
+    {-1, read_from_sensor_task, 30, 300, 0},
+    {-1, graphic_task, 30, 50, 0},
+    {-1, neural_network_task, 25, 1500, 0},
+    {-1, keyboard_task, 30, 50, 0}
+};
+\end{lstlisting}
+
 \subsection{Count deadline}
 
-\section{Creation image}
-The image is created from the values readed from the sensor. The allegro color 
-mode is set to 16 bits. In the 16 bits mode 5 bits are for the red and blue 
-values e 6 bits for the green value. 
-
-The sensor samples two data, the CO2 and the tVOC. Each value is a 16-bit number
-and so we represent the values readed as colors in 16-bit. The image is splitted
-in two parts, left and right. In the left side we draw the CO2 and in the right 
-the tVOC.
-
-Whenever we read a new pair of values from the sensor, we move the previous 
-image one line below, removing the line at the bottom of the image, and we add 
-the new line on the top of the image.
-
-\section{Focus on neural network}
+\section{Neural network}
 Regarding the neural network we used Tensorflow, an open-source software 
 library for dataflow programming across a range of tasks. 
 
-For training the neural network we used a python code \cite{retrain} provided by
-Tensorflow. In this file a lot of configurations are possible. In our 
-application we use the default configurations and choose only the number of 
-training steps.
-
-\section{Neural network training}
+For training the neural network was used a python script
+\href{https://www.tensorflow.org/hub/tutorials/image\_retraining}{retrain}
+provided by Tensorflow. In this file a lot of configurations are possible. In
+our application we use the default configurations and choose only the number
+of training steps.
 
 \section{The results}
 
 \section{Conclusions}
-
-\begin{thebibliography}{9}
-\bibitem{retrain}How to Retrain an Image Classifier for New Categories 
-\texttt{\hyperlink{How to Retrain an Image Classifier for New 
-Categories}{https://www.tensorflow.org/hub/tutorials/image\_retraining}}
-
-\end{thebibliography}
 
 \end{document}

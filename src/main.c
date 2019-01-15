@@ -4,10 +4,10 @@
 #include "ptask.h"
 #include "sensor.h"
 
-Task task_table[] = {{-1, store_image_task, 20, 500, 0},
-                     {-1, read_from_sensor_task, 25, 500, 0},
+Task task_table[] = {{-1, store_image_task, 20, 1000, 0},
+                     {-1, read_from_sensor_task, 30, 300, 0},
                      {-1, graphic_task, 30, 50, 0},
-                     {-1, neural_network_task, 20, 1500, 0},
+                     {-1, neural_network_task, 25, 1500, 0},
                      {-1, keyboard_task, 30, 50, 0}};
 
 int main() {
