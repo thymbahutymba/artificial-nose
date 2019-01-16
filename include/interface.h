@@ -126,8 +126,6 @@
 #define LTEXT_X (LEGEND_X1 + INTERNAL_MARGIN)
 #define LTEXT_Y (LEGEND_Y1 + INTERNAL_MARGIN)
 
-#endif // NEW_INTERFACE
-
 /*******************************************************************************
  * DEFINITION AND DECLARATION
  ******************************************************************************/
