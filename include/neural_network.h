@@ -35,6 +35,13 @@ struct args {
     TF_Tensor *out_vals;
 };
 
+TF_Graph *graph;              // Graph associated to session
+TF_Status *status;            // Result status of tensorflow execution
+TF_SessionOptions *sess_opts; // Tensorflow session options
+TF_Session *session;             //
+TF_Tensor *out_vals; // Tensor that contains results of execution
+
+TF_Output input_op, output;       // Input and output layers
 typedef short unsigned int img_t; // Type of value for each pixel of image
 unsigned char f_graph[MAX_FS];    // Array to contain the graph
 float *result;                    // Results taken from neural network

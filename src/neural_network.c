@@ -37,7 +37,7 @@ TF_Buffer *read_file(const char *file) {
 }
 
 /* Import the graph in the main graph */
-void import_graph(TF_Graph *graph, TF_Status *status) {
+void import_graph() {
     // Read graph from file
     TF_Buffer *graph_def = read_file(GRAPH_NAME);
 
@@ -127,13 +127,11 @@ TF_Tensor *tf_init_output() {
     return out_vals;
 }
 
-void run_session(TF_Session *session, TF_Graph *graph, TF_Status *status,
-                 TF_Tensor *out_vals) {
+/* Calculate the result having as input the current image */
+void run_session() {
 
-    TF_Output input_op = {TF_GraphOperationByName(graph, IN_NAME), 0};
+    // Crete input tensor
     TF_Tensor *input_tensor = tf_init_input();
-
-    TF_Output output = {TF_GraphOperationByName(graph, OUT_NAME), 0};
 
     // Run the graph associated with the session
     TF_SessionRun(session,
@@ -168,41 +166,33 @@ void tf_exit(void *args) {
 }
 
 /* Inizialization of all stuff required by tensorflow */
-void tf_init(TF_Graph **graph, TF_Status **status, TF_Session **session,
-             TF_SessionOptions **sess_opts, struct args *arguments,
-             TF_Tensor **out_vals) {
-    *graph = TF_NewGraph();
-    *status = TF_NewStatus();
+void tf_init(struct args *arguments) {
+    graph = TF_NewGraph();
+    status = TF_NewStatus();
 
     // Import graph from file
-    import_graph(*graph, *status);
+    import_graph();
+
+    // Initialize the input and output layers of neural network
+    input_op.oper = TF_GraphOperationByName(graph, IN_NAME);
+    input_op.index = 0;
+    output.oper = TF_GraphOperationByName(graph, OUT_NAME);
+    output.index = 0;
 
     // New session with associated graph
-    *sess_opts = TF_NewSessionOptions();
-    *session = TF_NewSession(*graph, *sess_opts, *status);
+    sess_opts = TF_NewSessionOptions();
+    session = TF_NewSession(graph, sess_opts, status);
 
     // Inizialization of output tensor
-    *out_vals = tf_init_output();
-
-    // Inizialization of struct arguments for future deallocation
-    arguments->session = *session;
-    arguments->status = *status;
-    arguments->sess_opts = *sess_opts;
-    arguments->graph = *graph;
-    arguments->out_vals = *out_vals;
+    out_vals = tf_init_output();
 }
 
 void *neural_network_task() {
-    struct timespec t;        // Time refering the period
-    struct timespec dl;       // Time refering the deadline
-    struct args arguments;    // Arguments for deallocation tensorflow stuff
-    TF_Graph *graph = NULL;   // Graph associated to session
-    TF_Status *status = NULL; // Result status of tensorflow execution
-    TF_SessionOptions *sess_opts = NULL; // Tensorflow session options
-    TF_Session *sess = NULL;             //
-    TF_Tensor *out_vals = NULL; // Tensor that contains results of execution
+    struct timespec t;     // Time refering the period
+    struct timespec dl;    // Time refering the deadline
+    struct args arguments; // Arguments for deallocation tensorflow stuff
 
-    tf_init(&graph, &status, &sess, &sess_opts, &arguments, &out_vals);
+    tf_init(&arguments);
 
     // Set cancel mode as asynchronous
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
@@ -214,7 +204,7 @@ void *neural_network_task() {
     set_activation(&dl, task_table[NN_I].period);
 
     while (1) {
-        run_session(sess, graph, status, out_vals);
+        run_session(sess, status, out_vals);
         check_deadline(&dl, NN_I);
         wait_for_activation(&t, &dl, task_table[NN_I].period);
     }
