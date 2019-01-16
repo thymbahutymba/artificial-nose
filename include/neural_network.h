@@ -26,22 +26,12 @@
 #define MAX_FS (1 << 27) // Max file size for load the tensorflow graph
 #define MAX_CC (1 << 5)  // Max value for each color channel
 
-/* Set of variable for tensorflow */
-struct args {
-    TF_Session *session;
-    TF_Status *status;
-    TF_SessionOptions *sess_opts;
-    TF_Graph *graph;
-    TF_Tensor *out_vals;
-};
+TF_Graph *graph;            // Graph associated to session
+TF_Status *status;          // Result status of tensorflow execution
+TF_Session *session;        //
+TF_Tensor *out_vals;        // Tensor that contains results of execution
+TF_Output input_op, output; // Input and output layers
 
-TF_Graph *graph;              // Graph associated to session
-TF_Status *status;            // Result status of tensorflow execution
-TF_SessionOptions *sess_opts; // Tensorflow session options
-TF_Session *session;             //
-TF_Tensor *out_vals; // Tensor that contains results of execution
-
-TF_Output input_op, output;       // Input and output layers
 typedef short unsigned int img_t; // Type of value for each pixel of image
 unsigned char f_graph[MAX_FS];    // Array to contain the graph
 float *result;                    // Results taken from neural network
