@@ -23,12 +23,10 @@
 // Number of elements contained into tensor
 #define ARRAY_SIZE (FIXED_S * FIXED_S * CHANNELS)
 
-// Max file size for load the tensorflow graph
-#define MAX_FS (1 << 27)
+#define MAX_FS (1 << 27) // Max file size for load the tensorflow graph
+#define MAX_CC (1 << 5)  // Max value for each color channel
 
-#define MAX_CC (1 << 5) // Max value for each color channel
-
-/* Data structure that contains all stuff allocated by tensorflow */
+/* Set of variable for tensorflow */
 struct args {
     TF_Session *session;
     TF_Status *status;
@@ -38,11 +36,11 @@ struct args {
 };
 
 typedef short unsigned int img_t; // Type of value for each pixel of image
-
-float *result;
+unsigned char f_graph[MAX_FS];    // Array to contain the graph
+float *result;                    // Results taken from neural network
 pthread_mutex_t mutex_res;
 
-extern Task task_table[];
+extern Task task_table[]; // Link to task table initialized into main file
 
 void *neural_network_task();
 

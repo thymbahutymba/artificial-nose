@@ -11,11 +11,12 @@ void get_keycodes(char *scan, char *ascii) {
  * are the letters from a to Z, numbers, minus and point, other characters are
  * ignored */
 void handle_key(Task *t_img, char scan, char ascii, unsigned int *i_key) {
+    // Directory where the image is saved
     char path2save[BUFFER_SIZE + strlen(PATH_I_NN)];
 
     pthread_mutex_lock(&mutex_keyboard);
 
-    // Change actual mode when is pressed enter
+    // Change actual mode when ENTER key is pressed
     if (scan == KEY_ENTER) {
         if (cur_mode == SAVING) {
             // Clean the buffer, screen output and cancel the image storing task

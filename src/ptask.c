@@ -31,7 +31,9 @@ void set_activation(struct timespec *t, int p) {
     time_add_ms(t, p);
 }
 
-/* Comparison between time */
+/* Comparison between time, return 1 when the first argument is greater than the
+ * second, -1 when the first argument is less than the second and 0 when the two
+ * arguments are egual */
 int time_cmp(struct timespec t1, struct timespec t2) {
     if (t1.tv_sec > t2.tv_sec)
         return 1;
@@ -56,12 +58,12 @@ int deadline_miss(struct timespec dl) {
     return 0;
 }
 
-/* Check for deadline miss and print if something goes wrong */
+/* Check for deadline miss and in case increase the value in the task table */
 void check_deadline(struct timespec *dl, size_t index) {
     task_table[index].dmiss += deadline_miss(*dl);
 }
 
-/* Create new thread with parameter of task */
+/* Create new thread with parameters of task */
 int task_create(Task *t) {
     pthread_attr_t attr;
     struct sched_param param;

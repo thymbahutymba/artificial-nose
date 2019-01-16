@@ -6,12 +6,14 @@
 #include <stdio.h>
 #include <time.h>
 
-#define SI_I (0)
+// Index of each task in the task table
+#define SI_I (0) 
 #define RS_I (1)
 #define G_I (2)
 #define NN_I (3)
 #define K_I (4)
 
+// Set of parameters that characterize a task
 typedef struct {
     pthread_t id;
     void *f;
@@ -20,7 +22,7 @@ typedef struct {
     size_t dmiss;
 } Task;
 
-extern Task task_table[];
+extern Task task_table[]; // Link to task table initialized into main file
 
 void time_add_ms(struct timespec *, int);
 void time_copy(struct timespec *, struct timespec);

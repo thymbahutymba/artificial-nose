@@ -1,12 +1,10 @@
 #include "neural_network.h"
 
-unsigned char f_graph[MAX_FS];
-
-/* Frees the data previously allocated for tensorflow graph */
+/* Free the data previously allocated for tensorflow graph */
 void free_buffer(void *data __attribute__((unused)),
                  size_t length __attribute__((unused))) {}
 
-/* Frees the data associated to input tensor */
+/* Free the data associated to input tensor */
 static void deallocator(void *data __attribute__((unused)),
                         size_t length __attribute__((unused)),
                         void *arg __attribute__((unused))) {}
@@ -29,9 +27,11 @@ TF_Buffer *read_file(const char *file) {
     fread(f_graph, fsize, 1, f);
     fclose(f);
 
+    // TF_Buffer used by tensorflow to refer the graph
     TF_Buffer *buf = TF_NewBuffer();
-    buf->data = f_graph;
-    buf->length = fsize;
+
+    buf->data = f_graph; // Pointer where the graph is saved
+    buf->length = fsize; // Real dimension of the graph
     buf->data_deallocator = free_buffer;
     return buf;
 }
@@ -73,9 +73,9 @@ void resize_and_convert(float data[FIXED_S][FIXED_S][CHANNELS]) {
     /* Scan the bitmap row by row, column by column and get pixel color */
     for (row = 0; row < str_img->h; ++row)
         for (col = 0; col < str_img->w; ++col) {
-            /* Gets the 16-bit pixel color of the stretched image in the given
+            /* Gets the 15-bit pixel color of the stretched image in the given
              * location */
-            color = _getpixel16(str_img, col, row);
+            color = _getpixel15(str_img, col, row);
 
             /* Extracts the red, green and blue component from color and
              * normalize it from 0 to 1 */
@@ -84,6 +84,7 @@ void resize_and_convert(float data[FIXED_S][FIXED_S][CHANNELS]) {
             data[row][col][2] = (float)getb15(color) / MAX_CC;
         }
 
+    // Destroy the bitmap previously allocated
     destroy_bitmap(str_img);
     release_screen();
 }
@@ -164,9 +165,6 @@ void tf_exit(void *args) {
     TF_DeleteSessionOptions(((struct args *)args)->sess_opts);
     TF_DeleteGraph(((struct args *)args)->graph);
     TF_DeleteTensor(((struct args *)args)->out_vals);
-
-    // This printf should be remove in the future
-    printf("Cleaned\n");
 }
 
 /* Inizialization of all stuff required by tensorflow */

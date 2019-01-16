@@ -4,7 +4,7 @@
 
 #include "interface.h"
 
-/* Initialization of allegro and setting color mode to RGBA */
+/* Initialization of allegro and setting color mode to RGB */
 void init_interface() {
     allegro_init();
     set_color_depth(COLOR_MODE);
@@ -21,6 +21,7 @@ void draw_background() {
         "ENTER: switch between mode",
     };
 
+    // Number of elements contained in legend
     const int legend_element = sizeof(legend_text) / sizeof(char *);
 
     acquire_screen();
@@ -56,6 +57,7 @@ void draw_background() {
                BKG_COLOR);
     textout_ex(screen, font, "tVOC:", SXT_TVOC_TEXT, SYT_SCURRENT, GRAPH2_COLOR,
                BKG_COLOR);
+
     release_screen();
 }
 
@@ -86,7 +88,10 @@ void clear_graph() {
 
     // Clean graph section for drawing new graph from start
     clear_bitmap(bmp);
+
+    // Destroy bitmap allocated previously
     destroy_bitmap(bmp);
+
     release_screen();
 }
 
@@ -131,7 +136,7 @@ void draw_graph(unsigned int *last_draw) {
     }
 }
 
-/* Print on screen the current values readed from sensor */
+/* Print on screen the current values read from sensor */
 void draw_information() {
     uint16_t c_CO2 = 0, c_tVOC = 0; // current values for CO2 and tVOC
     char s[5];                      // string to be printed
@@ -169,21 +174,21 @@ void shift_to_bottom() {
     // Replace image with stored image that not contains anymore last row
     blit(img_bmp, screen, 0, 0, IMG_XT, IMG_YT + (int)EL_H, EL_W, size);
 
-    // clear the firt line of the image
+    // Clear the firt line of the image
     row_bmp = create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, (int)EL_H - 1);
     clear_bitmap(row_bmp);
 
-    // destroy bitmap previously allocated
+    // Destroy bitmaps previously allocated
     destroy_bitmap(row_bmp);
     destroy_bitmap(img_bmp);
 }
 
-/* Displays the last values ​​not yet printed on the screen. */
+/* Display the last values ​​not yet printed on the screen. */
 void draw_image(unsigned int *last_draw) {
     acquire_screen();
     pthread_mutex_lock(&mutex_data);
 
-    // Draws the elements that are not drawn yet
+    // Draw the elements that are not drawn yet
     for (; *last_draw != (r_data.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT;
          *last_draw = (*last_draw + 1) % GRAPH_ELEMENT) {
 
@@ -202,13 +207,14 @@ void draw_image(unsigned int *last_draw) {
 
 /* Save image to file, the directory is the one previously created */
 void save_image(int index_image) {
-    PALETTE pal;  // color palette
-    char str[80]; // name of file to save
+    PALETTE pal;       // Color palette
+    char str[80];      // Name of file to save
+    BITMAP *image_bmp; // Bitmap to save the image
 
     acquire_screen();
 
-    BITMAP *image_bmp =
-        create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, ACT_IMG_H);
+    // Create bitmap with the current image
+    image_bmp = create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, ACT_IMG_H);
 
     get_palette(pal);
 
@@ -220,12 +226,14 @@ void save_image(int index_image) {
     // Save image to file
     save_bmp(str, image_bmp, pal);
 
+    // Destroy bitmap previously allocated
     destroy_bitmap(image_bmp);
     release_screen();
 }
 
 /* Draw current keyboard mode and text acquired from it */
 void draw_text() {
+    // Buffer containing the string of the two mode
     char *txt_mode[] = {"WRITING: ", "SAVING:  "};
     // Offset among X axis for printing text input
     int x_off = strlen(txt_mode[0]) * 8;
@@ -240,6 +248,7 @@ void draw_text() {
     textout_ex(screen, font, txt_mode[cur_mode], TEXT_X1, TEXT_Y1, MAIN_COLOR,
                BKG_COLOR);
 
+    // Difference between old input lenght and new input lenght
     len = old_l - strlen(keyboard_buf);
 
     // The new length of keyboard buffer is less than the previous one
@@ -258,9 +267,10 @@ void draw_text() {
     release_screen();
 }
 
+/* Print on screen the result of the neural network */
 void draw_results() {
     size_t i;
-    char msg[BUFFER_SIZE];
+    char msg[BUFFER_SIZE]; // Buffer to print the results on the screen
 
     textout_ex(screen, font, "RESULTS", RTEXT_X, RTEXT_Y, MAIN_COLOR,
                BKG_COLOR);
@@ -268,7 +278,9 @@ void draw_results() {
     acquire_screen();
     pthread_mutex_lock(&mutex_res);
 
+    // For each class print its result
     for (i = 0; i < N_LAB; ++i) {
+        // Check if the results has been calculated
         if (result == NULL)
             sprintf(msg, LABELS[i], 0);
         else

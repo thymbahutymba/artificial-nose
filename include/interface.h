@@ -71,15 +71,18 @@
 #define SXT_TVOC_TEXT (SXT_S + 280) // dynamc text alignment for tVOC text
 
 /*******************************************************************************
- * KEYBOAD INPUT
+ * KEYBOARD INPUT
  ******************************************************************************/
 
-#define INPUT_H (40)
+#define INPUT_H (40) // Height of section where the keyboard buffer is printed
+
+// Coordinates for printing the rectangle that delimits the keyboard input area
 #define INPUT_X1 (EXTERNAL_MARGIN)
 #define INPUT_Y1 (EXTERNAL_MARGIN)
 #define INPUT_X2 (650)
 #define INPUT_Y2 (INPUT_Y1 + INPUT_H)
 
+// Position where the text is printed
 #define TEXT_X1 (INPUT_X1 + INTERNAL_MARGIN)
 #define TEXT_Y1 (INPUT_Y1 + 18)
 
@@ -107,8 +110,9 @@
 #define RESULT_X1 (EXTERNAL_MARGIN)
 #define RESULT_Y1 (INPUT_Y2 + EXTERNAL_MARGIN)
 #define RESULT_X2 (INPUT_X2)
-#define RESULT_Y2 (IMAGE_Y2 - EXTERNAL_MARGIN) // GRAPH_Y2-EXTERNAL_MARGIN
+#define RESULT_Y2 (IMAGE_Y2 - EXTERNAL_MARGIN)
 
+// Position where the results is printed
 #define RTEXT_X (RESULT_X1 + INTERNAL_MARGIN)
 #define RTEXT_Y (RESULT_Y1 + INTERNAL_MARGIN)
 
@@ -122,7 +126,7 @@
 #define LEGEND_X2 (SCREEN_WIDTH - EXTERNAL_MARGIN)
 #define LEGEND_Y2 (RESULT_Y2)
 
-// Coordinates that represents the alignment of text in legend
+// Coordinates that represents the alignment of text in the legend area
 #define LTEXT_X (LEGEND_X1 + INTERNAL_MARGIN)
 #define LTEXT_Y (LEGEND_Y1 + INTERNAL_MARGIN)
 
@@ -130,6 +134,7 @@
  * DEFINITION AND DECLARATION
  ******************************************************************************/
 
+// Struct to store the values read from the sensor
 typedef struct {
     unsigned int top;             // last element of the queue
     int x_point[GRAPH_ELEMENT];   // Coordinates x axis
@@ -137,10 +142,10 @@ typedef struct {
     uint16_t tvoc[GRAPH_ELEMENT]; // array for tVOC data from sensor
 } Queue;
 
-Queue r_data; // data readed by sensor and printed by graphich task
+Queue r_data; // data read by sensor and printed by graphich task
 pthread_mutex_t mutex_data;
 
-extern Task task_table[];
+extern Task task_table[]; // Link to task table initialized into main file
 
 void *graphic_task();
 void *store_image_task();
