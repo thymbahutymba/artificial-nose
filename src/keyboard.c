@@ -40,7 +40,7 @@ void handle_key(Task *t_img, char scan, char ascii, unsigned int *i_key) {
     // Delete letters when backspace is pressed and WRITING mode is active
     if (!cur_mode && scan == KEY_BACKSPACE && *i_key) {
         keyboard_buf[--(*i_key)] = '\0';
-    } else if (!cur_mode && *i_key < BUFFER_SIZE &&
+    } else if (!cur_mode && *i_key < BUFFER_SIZE - 1 &&
                ((scan >= KEY_A && scan <= KEY_9_PAD) || scan == KEY_MINUS ||
                 scan == KEY_STOP)) {
 
@@ -72,14 +72,17 @@ void *keyboard_task() {
     set_activation(&dl, task_table[K_I].period);
 
     while (1) {
-        // Get the key pressed from keyboard
-        get_keycodes(&scan, &ascii);
+        // Check if some key was pressed
+        if (keypressed()) {
+            // Get the key pressed from keyboard
+            get_keycodes(&scan, &ascii);
 
-        // Reaction based on key that was pressed if different
-        if (scan == KEY_ESC)
-            return NULL;
-        else
-            handle_key(&task_table[SI_I], scan, ascii, &i_key);
+            // Reaction based on key that was pressed if different
+            if (scan == KEY_ESC)
+                return NULL;
+            else
+                handle_key(&task_table[SI_I], scan, ascii, &i_key);
+        }
 
         check_deadline(&dl, K_I);
         wait_for_activation(&t, &dl, task_table[K_I].period);

@@ -6,13 +6,9 @@
 
 /* Initialization of allegro and setting color mode to RGBA */
 void init_interface() {
-    // PALETTE palette;
-
     allegro_init();
     set_color_depth(COLOR_MODE);
     set_gfx_mode(GFX_AUTODETECT_WINDOWED, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0);
-
-    // font = load_font("fonts/hackBold10.pcx", palette, NULL);
 }
 
 /* Prints of all background that will not be changed during program execution */
@@ -90,6 +86,7 @@ void clear_graph() {
 
     // Clean graph section for drawing new graph from start
     clear_bitmap(bmp);
+    destroy_bitmap(bmp);
     release_screen();
 }
 
@@ -175,6 +172,10 @@ void shift_to_bottom() {
     // clear the firt line of the image
     row_bmp = create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, (int)EL_H - 1);
     clear_bitmap(row_bmp);
+
+    // destroy bitmap previously allocated
+    destroy_bitmap(row_bmp);
+    destroy_bitmap(img_bmp);
 }
 
 /* Displays the last values ​​not yet printed on the screen. */
@@ -216,8 +217,10 @@ void save_image(int index_image) {
     sprintf(str, "%s%s/image_%04i.bmp", PATH_I_NN, keyboard_buf, index_image);
     pthread_mutex_unlock(&mutex_keyboard);
 
+    // Save image to file
     save_bmp(str, image_bmp, pal);
 
+    destroy_bitmap(image_bmp);
     release_screen();
 }
 
@@ -277,27 +280,6 @@ void draw_results() {
     pthread_mutex_unlock(&mutex_res);
     release_screen();
 }
-
-/*
-void draw_histogram() {
-    size_t i;
-
-    acquire_screen();
-    pthread_mutex_lock(&mutex_res);
-
-    for (i = 0; i < N_LAB; ++i) {
-
-        rectfill(screen, RTEXT_X + 150, RTEXT_Y + LINE_SPACE * (i + 1),
-                 RTEXT_X + 150 + 200, RTEXT_Y + LINE_SPACE * (i + 1) + 10,
-                 BKG_COLOR);
-
-        rectfill(screen, RTEXT_X + 150, RTEXT_Y + LINE_SPACE * (i + 1),
-                 RTEXT_X + 150 + result[i] * 200,
-                 RTEXT_Y + LINE_SPACE * (i + 1) + 10, TEXT_COLOR);
-    }
-    pthread_mutex_unlock(&mutex_res);
-    release_screen();
-}*/
 
 /* Periodic task manually activated for images storing in specific directory
  * created in writing mode. */

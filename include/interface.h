@@ -10,17 +10,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define SCREEN_WIDTH (1024)               // width of the window
-#define SCREEN_HEIGHT (768)               // height of the window
-#define EXTERNAL_MARGIN (5)               // space between sections borders
-#define INTERNAL_MARGIN (8)               // internal section space
+#define SCREEN_WIDTH (1024)              // width of the window
+#define SCREEN_HEIGHT (768)              // height of the window
+#define EXTERNAL_MARGIN (5)              // space between sections borders
+#define INTERNAL_MARGIN (8)              // internal section space
 #define BORDER_COLOR (0b111111111100000) // yellow color for border section
 #define MAIN_COLOR (0b111110000000000)   // red for title
 #define TEXT_COLOR (0b111111111111111)   // white for text color
 #define GRAPH1_COLOR (0b111110000000000) // red for CO2 graph
 #define GRAPH2_COLOR (0b000001111100000) // green for tVOC gragh
-#define BKG_COLOR (0)    // black for background
-#define LINE_SPACE (14)                   // space between each line of text
+#define BKG_COLOR (0)                    // black for background
+#define LINE_SPACE (14)                  // space between each line of text
 
 #define COLOR_MODE (15) // Sets the pixel color format to be used
 #define CHANNELS (3)    // RGB Image
@@ -131,8 +131,8 @@
  ******************************************************************************/
 
 typedef struct {
-    unsigned int top;
-    int x_point[GRAPH_ELEMENT];   // CHANGE NAME WITH A MORE USEFUL WORD
+    unsigned int top;             // last element of the queue
+    int x_point[GRAPH_ELEMENT];   // Coordinates x axis
     uint16_t co2[GRAPH_ELEMENT];  // array for CO2 data from sensor
     uint16_t tvoc[GRAPH_ELEMENT]; // array for tVOC data from sensor
 } Queue;
