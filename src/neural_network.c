@@ -79,9 +79,9 @@ void resize_and_convert(float data[FIXED_S][FIXED_S][CHANNELS]) {
 
             /* Extracts the red, green and blue component from color and
              * normalize it from 0 to 1 */
-            data[row][col][0] = (float)getr16(color) / MAX_CC;
-            data[row][col][1] = (float)getg16(color) / MAX_CC;
-            data[row][col][2] = (float)getb16(color) / MAX_CC;
+            data[row][col][0] = (float)getr15(color) / MAX_CC;
+            data[row][col][1] = (float)getg15(color) / MAX_CC;
+            data[row][col][2] = (float)getb15(color) / MAX_CC;
         }
 
     destroy_bitmap(str_img);

@@ -67,8 +67,8 @@ task and wait for their termination.
     \State start $t$
 \EndFor
 
-\Loop{ \textit{wait for termination of keyboard task}}
-\EndLoop
+\Repeat
+\Until{\textit{wait for termination of keyboard task}}
 
 \For{$t \in T$} 
     \State cancel and join $t$
@@ -322,8 +322,6 @@ Task task_table[] = {
 };
 \end{lstlisting}
 
-\subsection{Count deadline}
-
 \section{Neural network}
 Regarding the neural network we used Tensorflow, an open-source software 
 library for dataflow programming across a range of tasks. 
@@ -333,6 +331,13 @@ For training the neural network was used a python script
 provided by Tensorflow. In this file a lot of configurations are possible. In
 our application we use the default configurations and choose only the number
 of training steps.
+
+The output of the retrain script is saved into a file that we have called
+\texttt{graph.pb}. When the neural network task is activated, it loads this
+file that is used by tensorflow for recognizing the image. Each pixel of
+image is divided into three elements, one for each color: red, green and
+blue; the value of each color for each pixel is stored into a third order
+tensor, which is the input for the neural network.
 
 \section{The results}
 
