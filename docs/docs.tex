@@ -42,15 +42,15 @@ Before start the store image task it's possible to write the name of the
 directory in which the images will be saved; if no name it's writed the
 images will be saved into \textit{image\_neural\_network} directory.
 
-The sensor is readed by an Arduino M0 pro; the sampled data readed by arduino
-are sent via the serial port to our application and readed by the sensor
+The sensor is read by an Arduino M0 pro; the sampled data read by arduino
+are sent via the serial port to our application and read by the sensor
 task. All the tasks are terminated by the main when the user presses the
 \texttt{ESC} key.
 
 \subsection{Main function}
 In the main function [\ref{main}] all the tasks, except the store image task,
 are started and the mutexes initialized. The mutexes are three, one for the
-buffer that contains the values readed from the sensor, one for the results
+buffer that contains the values read from the sensor, one for the results
 given by the neural network and one for the buffer that contains the keyboard
 input. The main also starts allegro and waits for the termination of the
 keyboard task. Once the keyboard task terminates the main cancels all other
@@ -105,7 +105,7 @@ legend, the current values and the current status (\texttt{SAVING} or
 \State draw graph
 \State draw image
 \State draw results given by neural network
-\State draw current values readed from sensor
+\State draw current values read from sensor
 \State draw keyboard input
 \State wait for next activation
 \EndLoop
@@ -131,13 +131,13 @@ the sensor. The allegro color mode is set to 15-bit. In the 15-bit mode each
 color is represented by 5-bit.
 
 The sensor samples two data, the CO2 and the tVOC. Each value is a 15-bit
-number and so we represent the values readed as colors in 15-bit. The image
+number and so we represent the values read as colors in 15-bit. The image
 is divided in two parts, left and right. In the left side we draw the CO2
 and in the right the tVOC. Even if each value could be potentially from $0$ to 
 $2^{16}$ the CO2 value is between $400$ and $8192$ and the tVOC value is between
 $0$ and $1187$. These infomations are taken from the datasheet of sensor.
 
-Whenever a new pair of values are readed from the sensor, the image is moved
+Whenever a new pair of values are read from the sensor, the image is moved
 one line below, removing one line at the bottom of the image and adding the
 new line, which contains the new values, on the top of the image.
 
@@ -185,9 +185,9 @@ directory in which the image are saved.
 
 \subsection{Sensor task}
 The sensor task [\ref{sensortask}] reads the values from the arduino which
-sends on serial port the values taken from the sensor. The readed values are
+sends on serial port the values taken from the sensor. The read values are
 stored into an array and used by the graphic task to draw the image and the
-graph; the current readed values are also standalone printed by the graphic
+graph; the current read values are also standalone printed by the graphic
 task.
 
 \begin{algorithm}[H]
@@ -201,7 +201,7 @@ task.
 \State set activation task
 
 \Loop
-\State $data\_q\gets data\_q$ + values readed from sensor
+\State $data\_q\gets data\_q$ + values read from sensor
 \State wait for next activation
 \EndLoop
 
