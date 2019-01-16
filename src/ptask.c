@@ -68,7 +68,7 @@ int task_create(Task *t) {
 
     pthread_attr_init(&attr);
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
-    pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
+    pthread_attr_setschedpolicy(&attr, SCHED_RR);
 
     param.sched_priority = (*t).priority;
     pthread_attr_setschedparam(&attr, &param);
