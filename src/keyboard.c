@@ -46,6 +46,7 @@ void handle_key(Task *t_img, char scan, char ascii, unsigned int *i_key) {
 
         // Store the new letters when the WRITING mode is active
         keyboard_buf[(*i_key)++] = ascii;
+        keyboard_buf[*i_key] = '\0';
     }
     pthread_mutex_unlock(&mutex_keyboard);
 }
