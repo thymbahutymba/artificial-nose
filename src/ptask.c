@@ -60,7 +60,22 @@ int deadline_miss(struct timespec dl) {
 
 /* Check for deadline miss and in case increase the value in the task table */
 void check_deadline(struct timespec *dl, size_t index) {
+    struct timespec now;
+    size_t ex_time;
+
+    pthread_mutex_lock(&mutex_tt);
+
+    // Update the deadline miss
     task_table[index].dmiss += deadline_miss(*dl);
+
+    // Compute the WCET
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ex_time = task_table[index].period + (now.tv_sec - dl->tv_sec) * 1000 +
+           ((now.tv_nsec - dl->tv_nsec)) / 1000000;
+    task_table[index].WCET =
+        (ex_time > task_table[index].WCET) ? ex_time : task_table[index].WCET;
+
+    pthread_mutex_unlock(&mutex_tt);
 }
 
 /* Create new thread with parameters of task */
@@ -70,7 +85,7 @@ int task_create(Task *t) {
 
     pthread_attr_init(&attr);
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
-    pthread_attr_setschedpolicy(&attr, SCHED_RR);
+    pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
 
     param.sched_priority = (*t).priority;
     pthread_attr_setschedparam(&attr, &param);

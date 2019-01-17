@@ -209,7 +209,7 @@ void *neural_network_task() {
     tf_init();
 
     // Set cancel mode as asynchronous
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    // pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
     // Push the routine that is executed after receiving cancellation request
     pthread_cleanup_push(&tf_exit, NULL);

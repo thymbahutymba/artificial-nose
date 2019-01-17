@@ -11,9 +11,33 @@ void init_interface() {
     set_gfx_mode(GFX_AUTODETECT_WINDOWED, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0);
 }
 
-/* Prints of all background that will not be changed during program execution */
-void draw_background() {
-    int i;
+/* Print task information (name, deadline and WCET) in its area */
+void print_tinfo() {
+    size_t i;
+
+    // Task name of our application
+    char *task_name[] = {
+        "Store image task:", "Read from sensor task:", "Graphic task:",
+        "Neural network task:", "Keyboard task:"};
+
+    // Print line for deadline miss and wcet for each task in task task table
+    for (i = 0; i < N_TASK; ++i) {
+
+        // Print the task name
+        textout_ex(screen, font, task_name[i], DMTEXT_X,
+                   DMWTEXT_Y + LINE_SPACE * 2 * i, MAIN_COLOR, BKG_COLOR);
+
+        // Print deadline and wcet text
+        textout_ex(screen, font, "Deadline miss: ", DMTEXT_X,
+                   DMWTEXT_Y + LINE_SPACE * (2 * i + 1), TEXT_COLOR, BKG_COLOR);
+        textout_ex(screen, font, "WCET: ", WCETEXT_X,
+                   DMWTEXT_Y + LINE_SPACE * (2 * i + 1), TEXT_COLOR, BKG_COLOR);
+    }
+}
+
+/* Print legend title and information in its area */
+void print_legend() {
+    size_t i;
 
     // Legend that display which are the possible interaction with program
     char *legend_text[] = {
@@ -22,10 +46,32 @@ void draw_background() {
     };
 
     // Number of elements contained in legend
-    const int legend_element = sizeof(legend_text) / sizeof(char *);
+    const size_t legend_element = sizeof(legend_text) / sizeof(char *);
 
-    acquire_screen();
+    textout_ex(screen, font, "LEGEND", LTEXT_X, LTEXT_Y, MAIN_COLOR, BKG_COLOR);
 
+    // Prints each row that is contained in legend
+    for (i = 0; i < legend_element; i++)
+        textout_ex(screen, font, legend_text[i], LTEXT_X,
+                   LTEXT_Y + LINE_SPACE * (i + 1), TEXT_COLOR, BKG_COLOR);
+}
+
+/* Print static text of all interface */
+void print_text() {
+    print_legend(); // Print legend
+    print_tinfo();  // Print task information
+
+    // Prints the text where will be displayed CO2 and tVOC values
+    textout_ex(screen, font, "Current value:", SXT_S, SYT_SCURRENT, TEXT_COLOR,
+               BKG_COLOR);
+    textout_ex(screen, font, "CO2:", SXT_CO2_TEXT, SYT_SCURRENT, GRAPH1_COLOR,
+               BKG_COLOR);
+    textout_ex(screen, font, "tVOC:", SXT_TVOC_TEXT, SYT_SCURRENT, GRAPH2_COLOR,
+               BKG_COLOR);
+}
+
+/* Print all rectangle of the interface */
+void print_rectangle() {
     // Draws rectangle that delimits the graphs section
     rect(screen, GRAPH_X1, GRAPH_Y1, GRAPH_X2, GRAPH_Y2, BORDER_COLOR);
 
@@ -40,23 +86,20 @@ void draw_background() {
 
     // Draws rectangle that delimits the legend section
     rect(screen, LEGEND_X1, LEGEND_Y1, LEGEND_X2, LEGEND_Y2, BORDER_COLOR);
-    textout_ex(screen, font, "LEGEND", LTEXT_X, LTEXT_Y, MAIN_COLOR, BKG_COLOR);
 
     // Draws rectangle that delimits the keyboard input
     rect(screen, INPUT_X1, INPUT_Y1, INPUT_X2, INPUT_Y2, BORDER_COLOR);
 
-    // Prints each row that is contained in legend
-    for (i = 0; i < legend_element; i++)
-        textout_ex(screen, font, legend_text[i], LTEXT_X,
-                   LTEXT_Y + LINE_SPACE * (i + 1), TEXT_COLOR, BKG_COLOR);
+    // Draws rectangle that delimits the deadline miss and wcet section
+    rect(screen, DMW_X1, DMW_Y1, DMW_X2, DMW_Y2, BORDER_COLOR);
+}
 
-    // Prints the text where will be displayed CO2 and tVOC values
-    textout_ex(screen, font, "Current value:", SXT_S, SYT_SCURRENT, TEXT_COLOR,
-               BKG_COLOR);
-    textout_ex(screen, font, "CO2:", SXT_CO2_TEXT, SYT_SCURRENT, GRAPH1_COLOR,
-               BKG_COLOR);
-    textout_ex(screen, font, "tVOC:", SXT_TVOC_TEXT, SYT_SCURRENT, GRAPH2_COLOR,
-               BKG_COLOR);
+/* Prints of all background that will not be changed during program execution */
+void draw_background() {
+    acquire_screen();
+
+    print_rectangle(); // Print rectangle that define the interface
+    print_text();      // Print static text of interface
 
     release_screen();
 }
@@ -79,8 +122,6 @@ void norm_cord(int index, unsigned int *n_co2, unsigned int *n_tvoc) {
 void clear_graph() {
     BITMAP *bmp; // Bitmap for clearing image on bottom
 
-    acquire_screen();
-
     // Create reference to graph zone
     bmp = create_sub_bitmap(
         screen, GRAPH_X1 + INTERNAL_MARGIN, GRAPH_Y1 + INTERNAL_MARGIN,
@@ -91,8 +132,6 @@ void clear_graph() {
 
     // Destroy bitmap allocated previously
     destroy_bitmap(bmp);
-
-    release_screen();
 }
 
 /* Drawing of both graphs tVOC and CO2 that represents the last GRAPH_ELEMENT
@@ -112,7 +151,6 @@ void draw_graph(unsigned int *last_draw) {
         norm_cord(*last_draw, &n_co2_1, &n_tvoc_1);
         norm_cord(*last_draw + 1, &n_co2_2, &n_tvoc_2);
 
-        acquire_screen();
         /* Drawing of the line for CO2 graph that joins the two points that
          * have been considered */
         fastline(screen, r_data.x_point[*last_draw], GRAPH_BASE - n_co2_1,
@@ -124,7 +162,6 @@ void draw_graph(unsigned int *last_draw) {
         fastline(screen, r_data.x_point[*last_draw], GRAPH_BASE - n_tvoc_1,
                  r_data.x_point[*last_draw + 1], GRAPH_BASE - n_tvoc_2,
                  GRAPH2_COLOR);
-        release_screen();
     }
     pthread_mutex_unlock(&mutex_data);
 
@@ -147,8 +184,6 @@ void draw_information() {
     c_tVOC = r_data.tvoc[(r_data.top + GRAPH_ELEMENT - 1) % GRAPH_ELEMENT];
     pthread_mutex_unlock(&mutex_data);
 
-    acquire_screen();
-
     // Print on screen the CO2 value
     sprintf(s, "%i", c_CO2);
     textout_ex(screen, font, "    ", SXT_CO2, SYT_SCURRENT, 0, 0);
@@ -158,8 +193,6 @@ void draw_information() {
     sprintf(s, "%i", c_tVOC);
     textout_ex(screen, font, "     ", SXT_TVOC, SYT_SCURRENT, 0, 0);
     textout_ex(screen, font, s, SXT_TVOC, SYT_SCURRENT, TEXT_COLOR, 0);
-
-    release_screen();
 }
 
 /* Shift image one line at bottom */
@@ -174,7 +207,7 @@ void shift_to_bottom() {
     // Replace image with stored image that not contains anymore last row
     blit(img_bmp, screen, 0, 0, IMG_XT, IMG_YT + (int)EL_H, EL_W, size);
 
-    // Clear the firt line of the image
+    // Clear the first line of the image
     row_bmp = create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, (int)EL_H - 1);
     clear_bitmap(row_bmp);
 
@@ -185,7 +218,7 @@ void shift_to_bottom() {
 
 /* Display the last values ​​not yet printed on the screen. */
 void draw_image(unsigned int *last_draw) {
-    acquire_screen();
+
     pthread_mutex_lock(&mutex_data);
 
     // Draw the elements that are not drawn yet
@@ -202,7 +235,6 @@ void draw_image(unsigned int *last_draw) {
                  IMG_YT + (int)EL_H - 1, r_data.tvoc[*last_draw]);
     }
     pthread_mutex_unlock(&mutex_data);
-    release_screen();
 }
 
 /* Save image to file, the directory is the one previously created */
@@ -210,8 +242,6 @@ void save_image(int index_image) {
     PALETTE pal;       // Color palette
     char str[80];      // Name of file to save
     BITMAP *image_bmp; // Bitmap to save the image
-
-    acquire_screen();
 
     // Create bitmap with the current image
     image_bmp = create_sub_bitmap(screen, IMG_XT, IMG_YT, EL_W, ACT_IMG_H);
@@ -228,7 +258,6 @@ void save_image(int index_image) {
 
     // Destroy bitmap previously allocated
     destroy_bitmap(image_bmp);
-    release_screen();
 }
 
 /* Draw current keyboard mode and text acquired from it */
@@ -241,7 +270,6 @@ void draw_text() {
     static size_t old_l = 0;    // Length of previous keyboard buffer
     size_t len; // Difference between old and new keyboard buffer
 
-    acquire_screen();
     pthread_mutex_lock(&mutex_keyboard);
 
     // Print current mode
@@ -263,8 +291,6 @@ void draw_text() {
     // Print text acquired from keyboard
     textout_ex(screen, font, text, TEXT_X1 + x_off, TEXT_Y1, TEXT_COLOR,
                BKG_COLOR);
-
-    release_screen();
 }
 
 /* Print on screen the result of the neural network */
@@ -275,7 +301,6 @@ void draw_results() {
     textout_ex(screen, font, "RESULTS", RTEXT_X, RTEXT_Y, MAIN_COLOR,
                BKG_COLOR);
 
-    acquire_screen();
     pthread_mutex_lock(&mutex_res);
 
     // For each class print its result
@@ -290,7 +315,6 @@ void draw_results() {
                    TEXT_COLOR, BKG_COLOR);
     }
     pthread_mutex_unlock(&mutex_res);
-    release_screen();
 }
 
 /* Periodic task manually activated for images storing in specific directory
@@ -304,16 +328,43 @@ void *store_image_task() {
     set_activation(&dl, task_table[SI_I].period);
 
     while (1) {
+        acquire_screen();
+
         // Save image in its directory
         save_image(index_image++);
+
+        release_screen();
 
         check_deadline(&dl, SI_I);
         wait_for_activation(&t, &dl, task_table[SI_I].period);
     }
 }
 
+// Print on screen the current counter of deadline misses and WCET
+void draw_dmw() {
+    size_t i;
+    size_t dm_l = strlen("Deadline miss: ");
+    size_t wcet_l = strlen("WCET: ");
+    char buff[BUFFER_SIZE];
+
+    pthread_mutex_lock(&mutex_tt);
+
+    // Print the current value of deadline miss and wcet for each task
+    for (i = 0; i < N_TASK; ++i) {
+        sprintf(buff, "%li", task_table[i].dmiss);
+        textout_ex(screen, font, buff, DMTEXT_X + dm_l * 8,
+                   DMWTEXT_Y + LINE_SPACE * (2 * i + 1), TEXT_COLOR, BKG_COLOR);
+
+        sprintf(buff, "%li", task_table[i].WCET);
+        textout_ex(screen, font, buff, WCETEXT_X + wcet_l * 8,
+                   DMWTEXT_Y + LINE_SPACE * (2 * i + 1), TEXT_COLOR, BKG_COLOR);
+    }
+
+    pthread_mutex_unlock(&mutex_tt);
+}
+
 /* Periodic task for the drawing of image, graph, information sampled from
- * sensor and text acquried from keyboard */
+ * sensor and text acquired from keyboard */
 void *graphic_task() {
     struct timespec t;         // Time refering the period
     struct timespec dl;        // Time refering the deadline
@@ -326,6 +377,8 @@ void *graphic_task() {
     draw_background();
 
     while (1) {
+        acquire_screen();
+
         // Prints into graph the element sampled that are not printed yet
         draw_graph(&ld_graph);
 
@@ -340,6 +393,11 @@ void *graphic_task() {
 
         // Prints the results computed by neural network
         draw_results();
+
+        // Prints deadline miss and wcet
+        draw_dmw();
+
+        release_screen();
 
         check_deadline(&dl, G_I);
         wait_for_activation(&t, &dl, task_table[G_I].period);

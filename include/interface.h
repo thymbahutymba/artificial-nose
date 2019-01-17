@@ -20,7 +20,7 @@
 #define GRAPH1_COLOR (0b111110000000000) // red for CO2 graph
 #define GRAPH2_COLOR (0b000001111100000) // green for tVOC gragh
 #define BKG_COLOR (0)                    // black for background
-#define LINE_SPACE (14)                  // space between each line of text
+#define LINE_SPACE (16)                  // space between each line of text
 
 #define COLOR_MODE (15) // Sets the pixel color format to be used
 #define CHANNELS (3)    // RGB Image
@@ -124,11 +124,26 @@
 #define LEGEND_X1 (RESULT_X2 + EXTERNAL_MARGIN)
 #define LEGEND_Y1 (EXTERNAL_MARGIN)
 #define LEGEND_X2 (SCREEN_WIDTH - EXTERNAL_MARGIN)
-#define LEGEND_Y2 (RESULT_Y2)
+#define LEGEND_Y2 (LEGEND_Y1 + 60)
 
 // Coordinates that represents the alignment of text in the legend area
 #define LTEXT_X (LEGEND_X1 + INTERNAL_MARGIN)
 #define LTEXT_Y (LEGEND_Y1 + INTERNAL_MARGIN)
+
+/*******************************************************************************
+ * DEADLINE MISS AND WCET
+ ******************************************************************************/
+
+/* Coordinates for drawing the rectangle that delimits the deadline miss and
+ * wcet area */
+#define DMW_X1 (LEGEND_X1)
+#define DMW_Y1 (LEGEND_Y2 + EXTERNAL_MARGIN)
+#define DMW_X2 (LEGEND_X2)
+#define DMW_Y2 (RESULT_Y2)
+
+#define DMTEXT_X (DMW_X1 + INTERNAL_MARGIN) // X position for deadline miss
+#define WCETEXT_X (DMW_X1 + (DMW_X2 - DMW_X1) / 2) // X position for wcet
+#define DMWTEXT_Y (DMW_Y1 + INTERNAL_MARGIN)       // Y start point for each row
 
 /*******************************************************************************
  * DEFINITION AND DECLARATION
@@ -146,6 +161,7 @@ Queue r_data; // data read by sensor and printed by graphich task
 pthread_mutex_t mutex_data;
 
 extern Task task_table[]; // Link to task table initialized into main file
+extern pthread_mutex_t mutex_tt; // Mutex to protect the task table
 
 void *graphic_task();
 void *store_image_task();

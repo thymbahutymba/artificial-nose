@@ -7,11 +7,12 @@
 #include <time.h>
 
 // Index of each task in the task table
-#define SI_I (0) 
+#define SI_I (0)
 #define RS_I (1)
 #define G_I (2)
 #define NN_I (3)
 #define K_I (4)
+#define N_TASK (5)
 
 // Set of parameters that characterize a task
 typedef struct {
@@ -20,9 +21,11 @@ typedef struct {
     int priority;
     int period;
     size_t dmiss;
+    size_t WCET;
 } Task;
 
 extern Task task_table[]; // Link to task table initialized into main file
+extern pthread_mutex_t mutex_tt; // Mutex to protect the task table
 
 void time_add_ms(struct timespec *, int);
 void time_copy(struct timespec *, struct timespec);
