@@ -4,6 +4,7 @@
 #include "ptask.h"
 #include "sensor.h"
 
+// Initialization of task table
 Task task_table[] = {{-1, store_image_task, 20, 1000, 0},
                      {-1, read_from_sensor_task, 30, 500, 0},
                      {-1, graphic_task, 30, 100, 0},
@@ -12,14 +13,17 @@ Task task_table[] = {{-1, store_image_task, 20, 1000, 0},
 
 int main() {
     size_t index;
+
+    // Number of task in the task table
     const size_t n_task = sizeof(task_table) / sizeof(Task);
 
+    // Mutexes initialization
     pthread_mutex_init(&mutex_data, NULL);
     pthread_mutex_init(&mutex_res, NULL);
     pthread_mutex_init(&mutex_keyboard, NULL);
 
-    mkdir(PATH_I_NN, 0755);
-    init_interface();
+    mkdir(PATH_I_NN, 0755); // Creation of directory in which images are saved
+    init_interface();       // Initialization of allegro interface
 
     // Start all task without the store image task
     for (index = 1; index < n_task; index++)

@@ -1,5 +1,12 @@
 #include "neural_network.h"
 
+TF_Graph *graph;              // Graph associated to trained neural network
+TF_Status *status;            // Result status of tensorflow execution
+TF_Session *session;          // Tensorflow session to calculate the results
+TF_SessionOptions *sess_opts; // Session option for the new session
+TF_Tensor *out_vals;          // Tensor that contains results of execution
+TF_Output input_op, output;   // Input and output layers
+
 /* Free the data previously allocated for tensorflow graph */
 void free_buffer(void *data __attribute__((unused)),
                  size_t length __attribute__((unused))) {}
@@ -51,6 +58,7 @@ void import_graph() {
         return;
     }
 
+    // Deallocation of tensorflow object previously allocated
     TF_DeleteImportGraphDefOptions(opts);
     TF_DeleteBuffer(graph_def);
 }
@@ -96,7 +104,7 @@ TF_Tensor *tf_init_input() {
     // Third order tensor that contains the resized bitmap
     float data[FIXED_S][FIXED_S][CHANNELS];
 
-    // Number of bytes of input
+    // Number of bytes for input
     const unsigned int nb_in = ARRAY_SIZE * sizeof(float);
 
     // Input dimensions
@@ -115,7 +123,7 @@ TF_Tensor *tf_init_input() {
 
 /* Initialization tensor that contains the results */
 void tf_init_output() {
-    // Number of bytes of output
+    // Number of bytes for output
     const int nb_out = N_LAB * sizeof(float);
 
     // Output dimensions
@@ -135,12 +143,13 @@ void run_session() {
     TF_SessionRun(session,
                   NULL,                        // Run options
                   &input_op, &input_tensor, 1, // in: tensor, values, number
-                  &output, &out_vals, 1,       // out: tensor, vlaues, number
+                  &output, &out_vals, 1,       // out: tensor, values, number
                   NULL, 0,                     // target operation, num targets
                   NULL,                        // metadata
                   status                       // outputs status
     );
 
+    // Check status of operation and set the results
     if (TF_GetCode(status) == TF_OK) {
         pthread_mutex_lock(&mutex_res);
         result = TF_TensorData(out_vals);
@@ -148,6 +157,7 @@ void run_session() {
     } else
         fprintf(stderr, "%s\n", TF_Message(status));
 
+    // Delete the input tensor not more necessary
     TF_DeleteTensor(input_tensor);
 }
 
@@ -157,6 +167,7 @@ void tf_exit() {
     TF_CloseSession(session, status);
     TF_DeleteSession(session, status);
 
+    TF_DeleteSessionOptions(sess_opts); // Destroy session options
     TF_DeleteStatus(status);   // Delete the object containing the status
     TF_DeleteGraph(graph);     // Delete the object containing the graph
     TF_DeleteTensor(out_vals); // Delete the object containing the results
@@ -164,31 +175,30 @@ void tf_exit() {
 
 /* Initialization of all stuff required by tensorflow */
 void tf_init() {
-    // Option for the new session
-    TF_SessionOptions *sess_opts = TF_NewSessionOptions();
+    // Allocate session option for the session
+    sess_opts = TF_NewSessionOptions();
 
-    graph = TF_NewGraph();   // Tensorflow graph refers to graph.bp ####
-    status = TF_NewStatus(); // Tensorflow status #####
+    // Tensorflow object refers neural network
+    graph = TF_NewGraph();
+    // Tensorflow object that contains the status of the operations
+    status = TF_NewStatus();
 
     // Import graph from file
     import_graph();
 
-    // Initialize the input layers of neural network
+    // Initialize the input layer of neural network
     input_op.oper = TF_GraphOperationByName(graph, IN_NAME);
     input_op.index = 0;
 
-    // Initialize the output layers of neurla network
+    // Initialize the output layer of neural network
     output.oper = TF_GraphOperationByName(graph, OUT_NAME);
     output.index = 0;
 
-    // Tensorflow session associated to the graph
+    // Create new session associated to the graph
     session = TF_NewSession(graph, sess_opts, status);
 
     // Initialization of output tensor
     tf_init_output();
-
-    // Destroy session options
-    TF_DeleteSessionOptions(sess_opts);
 }
 
 void *neural_network_task() {
