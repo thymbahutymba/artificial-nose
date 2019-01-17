@@ -18,21 +18,18 @@
 \section{Introduction}
 In this project a real-time application is developed to recognize smells from an
 artificial nose. The sensor used for the application is an air quality gas 
-sensor.
+sensor. The application is divided into five periodic tasks. Each task handles
+a specific functionality of our application.
 
-The rest of the documentation is structured in the following way: in section
-2 the tasks are explained one at a time, in the section 3...
+For the recognizing the image a neural network was trained. For what concerns
+the neural network the Tensorflow framework was used.
+
+% The smells for which the neural network has been trained are:
 
 \section{The tasks}
 In our application we have 5 periodic tasks (Figure \ref{tdiagram}): graphic
 task, sensor task, neural network task (made with Tensorflow), keyboard task
 and the store image task.
-
-\begin{figure}[!b]
-    \includegraphics[width=\textwidth]{diagram.pdf}
-    \caption{Task diagram}
-    \label{tdiagram}
-\end{figure}
 
 The main function sets everything up for the tasks, except for the store
 image task. The keyboard task is in charge to activate the store image task
@@ -47,16 +44,23 @@ are sent via the serial port to our application and read by the sensor
 task. All the tasks are terminated by the main when the user presses the
 \texttt{ESC} key.
 
+\begin{figure}[H]
+    \includegraphics[width=\textwidth]{diagram.pdf}
+    \caption{Task diagram}
+    \label{tdiagram}
+\end{figure}
+
 \subsection{Main function}
 In the main function [\ref{main}] all the tasks, except the store image task,
-are started and the mutexes initialized. The mutexes are three, one for the
+are started and the mutexes initialized. The mutexes are four, one for the
 buffer that contains the values read from the sensor, one for the results
-given by the neural network and one for the buffer that contains the keyboard
-input. The main also starts allegro and waits for the termination of the
-keyboard task. Once the keyboard task terminates the main cancels all other
-task and wait for their termination.
+given by the neural network, one to update the deadline miss and WCET values
+in the task table and one for the buffer that contains the keyboard input. The
+main also starts allegro and waits for the termination of the keyboard task.
+Once the keyboard task terminates the main cancels all other task and wait
+for their termination.
 
-\begin{algorithm}[b]
+\begin{algorithm}[H]
 \caption{Main}
 \label{main}
 
@@ -82,12 +86,13 @@ task and wait for their termination.
 The graphic task [\ref{graphic}] prints the interface (Figure
 \ref{interface}) of our application. The interface is divided into different
 areas which contains for each one: the graph, the image, the results, the
-legend, the current values and the current status (\texttt{SAVING} or
-\texttt{WRITING}) followed by, if present, the keyboard input.
+legend, the current values, the information about tasks and the current
+mode (\texttt{SAVING} or \texttt{WRITING}) followed by, if present, the
+keyboard input.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{images/interface.png}
+    \includegraphics[width=0.75\textwidth]{images/interface.png}
     \caption{Interface of application}
     \label{interface}
 \end{figure}
@@ -102,11 +107,11 @@ legend, the current values and the current status (\texttt{SAVING} or
 \State draw interface background
 
 \Loop
-\State draw graph
-\State draw image
+\State draw graph and image
 \State draw results given by neural network
 \State draw current values read from sensor
 \State draw keyboard input
+\State draw task information
 \State wait for next activation
 \EndLoop
 
@@ -120,7 +125,7 @@ and green for the $tVOC$. The graph contains at most $N$ readings of both values
 
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.60]{images/graph.png}
+    \includegraphics[scale=0.55]{images/graph.png}
     \caption{Graph }
     \label{graph}
 \end{figure}
@@ -131,11 +136,12 @@ the sensor. The allegro color mode is set to 15-bit. In the 15-bit mode each
 color is represented by 5-bit.
 
 The sensor samples two data, the CO2 and the tVOC. Each value is a 15-bit
-number and so we represent the values read as colors in 15-bit. The image
-is divided in two parts, left and right. In the left side we draw the CO2
-and in the right the tVOC. Even if each value could be potentially from $0$ to 
-$2^{16}$ the CO2 value is between $400$ and $8192$ and the tVOC value is between
-$0$ and $1187$. These infomations are taken from the datasheet of sensor.
+number and so we represent the values read as colors in 15-bit. The image is
+divided in two parts, left and right. In the left side we draw the CO2 and in
+the right the tVOC. Even if each value could be potentially from $0$ to
+$2^{16} - 1$ the CO2 value is between $400$ and $8192$ and the tVOC value is
+between $0$ and $1187$. These infomations are taken from the datasheet of
+sensor.
 
 Whenever a new pair of values are read from the sensor, the image is moved
 one line below, removing one line at the bottom of the image and adding the
@@ -170,12 +176,24 @@ This area shows the current values (Figure \ref{values}) sampled from the sensor
     \label{values}
 \end{figure}
 
+\subsubsection*{Task information}
+This area (Figure \ref{task_info}) contains the information about deadline
+misses and WCET for each task of our application. Before a task suspend it self
+waiting for the next activation, it updates its values in the task table.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.75]{images/task_info.png}
+    \caption{Task information}
+    \label{task_info}
+\end{figure}
+
 \subsubsection*{Current status}
 This area (Figure \ref{save_write}) gives the information about the current
 mode, printed on the left side; on the right side there is the name of the
 directory in which the image are saved.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[scale=0.75]{images/saving.png}
     \includegraphics[scale=0.75]{images/writing.png}
@@ -306,19 +324,20 @@ train the neural network for the recognizing of smells.
 In our application a task table (Listing \ref{ttable}) was created containing
 all the task that have to be started by the main function. The parameters
 that characterize a task are respectively: thread identifier, function to be
-execute, priority, period and deadline miss. At the beginning the thread
-identifier is set to $-1$, once the task is activated the thread identifier
-is updated. In case of deadline misses the application increments the
-corresponding value on the task table. The real time scheduling algorithm
-chosen is \texttt{SCHED\_RR}. The deadline corresponds with the period.
+execute, priority, period, number of deadline miss and the WCET. At the
+beginning the thread identifier is set to $-1$, once the task is activated
+the thread identifier is updated. In case of deadline misses the application
+increments the corresponding value on the task table. The real time
+scheduling algorithm chosen is \texttt{SCHED\_FIFO}. The deadline corresponds
+with the period.
 
 \begin{lstlisting}[caption={Task table}, captionpos=b, label={ttable}]
 Task task_table[] = {
-    {-1, store_image_task, 20, 1000, 0},
-    {-1, read_from_sensor_task, 30, 300, 0},
-    {-1, graphic_task, 30, 50, 0},
-    {-1, neural_network_task, 25, 1500, 0},
-    {-1, keyboard_task, 30, 50, 0}
+    {-1, store_image_task, 20, 1000, 0, 0},
+    {-1, read_from_sensor_task, 30, 500, 0, 0},
+    {-1, graphic_task, 30, 100, 0, 0},
+    {-1, neural_network_task, 25, 2000, 0, 0},
+    {-1, keyboard_task, 30, 100, 0, 0}
 };
 \end{lstlisting}
 
@@ -338,8 +357,6 @@ file that is used by tensorflow for recognizing the image. Each pixel of
 image is divided into three elements, one for each color: red, green and
 blue; the value of each color for each pixel is stored into a third order
 tensor, which is the input for the neural network.
-
-\section{The results}
 
 \section{Conclusions}
 
