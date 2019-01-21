@@ -7,10 +7,6 @@
 \usepackage{hyperref}
 \usepackage{listings}
 
-\title{Artificial Nose}
-\author{Luca Belluardo e Andrea Stevanato}
-\date{\today}
-
 \begin{document}
 
 \begin{titlepage}
@@ -36,7 +32,8 @@ a specific functionality of our application.
 For the recognizing the image a neural network was trained. For what concerns
 the neural network the Tensorflow framework was used.
 
-% The smells for which the neural network has been trained are:
+The smells for which the neural network has been trained are: orange, coffee
+and mustard. The final test accuracy of the neural network is about $93\%$.
 
 \section{The tasks}
 In our application we have 5 periodic tasks (Figure \ref{tdiagram}): graphic
@@ -370,7 +367,7 @@ image is divided into three elements, one for each color: red, green and
 blue; the value of each color for each pixel is stored into a third order
 tensor, which is the input for the neural network.
 
-\section{Conclusion}
+\section{Results}
 
 The first experiment was made with wine, vinegar, ethyl alcohol and perfume.
 Using this smells the sensor goes into saturation and it is not able to
@@ -378,10 +375,9 @@ discriminate between the smells. The same results was achieved increasing the
 distance between the smells and the sensor without no positive results.
 
 After the first experiment the neural network was trained for recognizing
-smells of coffee and orange. This two smells was chosen due to their limited
-CO2 and tVOC values. However, in our opinion, the sensor used for the
-application is not able to discriminate between this two smells. Hence the
-neural network can't produce the hoped results using the images created
-starting from both values: CO2 and tVOC.
+smells of orange, coffee and mustard. These smells was chosen due to their
+limited CO2 and tVOC values. With these values we obtained good results. Once
+the smell has been exposed to the sensor, it take some time to settle on a
+value.
 
 \end{document}
