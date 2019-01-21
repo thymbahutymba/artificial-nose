@@ -15,7 +15,7 @@
 #define OUT_NAME ("final_result")  // Name of output layer (default)
 
 // Array of labels for which the nn is trained
-#define LABELS ((const char *const[]){"A: %f", "B: %f", "C: %f", "D: %f"})
+#define LABELS ((const char *const[]){"Orange: %f", "Coffee: %f", "Mustard: %f"})
 #define N_LAB (sizeof(LABELS) / sizeof(char *)) // Number of labels
 
 #define FIXED_S (299) // Fixed size of image accepted by tensorflow model
@@ -24,7 +24,7 @@
 #define ARRAY_SIZE (FIXED_S * FIXED_S * CHANNELS)
 
 #define MAX_FS (1 << 27) // Max file size for load the tensorflow graph
-#define MAX_CC (1 << 5)  // Max value for each color channel
+#define MAX_CC (1 << 8)  // Max value for each color channel
 
 typedef short unsigned int img_t; // Type of value for each pixel of image
 unsigned char f_graph[MAX_FS];    // Array to contain the graph
