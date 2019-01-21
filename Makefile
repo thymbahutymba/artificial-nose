@@ -25,8 +25,8 @@ clean:
 	rm main
 
 retrain:
-	python3 retrain.py \
+	python retrain.py \
 		--image_dir=image_neural_network \
 		--output_graph graph.pb \
 		--output_labels labels.txt \
-		--how_many_training_steps 500
+		--how_many_training_steps 2000
