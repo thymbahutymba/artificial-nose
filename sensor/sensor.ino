@@ -2,23 +2,12 @@
 
 #define CCS811_ADDR 0x5B
 
-#define RANGE (512)
-#define BOTTOM_LIMIT (0 + RANGE)
-#define UPPER_LIMIT (65536 - RANGE)
-
 CCS811 sCCS811(CCS811_ADDR);
 
 void setup() {
     Serial.begin(115200);
     CCS811Core::status returnCode = sCCS811.begin();
 
-/*
-    float humidityVariable = (float)random(0, 10000) / 100;     // 0 to 100%
-    float temperatureVariable = (float)random(500, 7000) / 100; // 5C to 70C
-    sCCS811.setEnvironmentalData(humidityVariable, temperatureVariable);
-
-    Serial.print("Begin status code: ");
-*/
     if (returnCode != CCS811Core::SENSOR_SUCCESS)
     {
       printDriverError(returnCode);

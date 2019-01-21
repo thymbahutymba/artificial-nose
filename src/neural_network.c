@@ -1,12 +1,17 @@
 #include "neural_network.h"
 
-unsigned char f_graph[MAX_FS];
+TF_Graph *graph;              // Graph associated to trained neural network
+TF_Status *status;            // Result status of tensorflow execution
+TF_Session *session;          // Tensorflow session to calculate the results
+TF_SessionOptions *sess_opts; // Session option for the new session
+TF_Tensor *out_vals;          // Tensor that contains results of execution
+TF_Output input_op, output;   // Input and output layers
 
-/* Frees the data previously allocated for tensorflow graph */
+/* Free the data previously allocated for tensorflow graph */
 void free_buffer(void *data __attribute__((unused)),
                  size_t length __attribute__((unused))) {}
 
-/* Frees the data associated to input tensor */
+/* Free the data associated to input tensor */
 static void deallocator(void *data __attribute__((unused)),
                         size_t length __attribute__((unused)),
                         void *arg __attribute__((unused))) {}
@@ -29,15 +34,17 @@ TF_Buffer *read_file(const char *file) {
     fread(f_graph, fsize, 1, f);
     fclose(f);
 
+    // TF_Buffer used by tensorflow to refer the graph
     TF_Buffer *buf = TF_NewBuffer();
-    buf->data = f_graph;
-    buf->length = fsize;
+
+    buf->data = f_graph; // Pointer where the graph is saved
+    buf->length = fsize; // Real dimension of the graph
     buf->data_deallocator = free_buffer;
     return buf;
 }
 
 /* Import the graph in the main graph */
-void import_graph(TF_Graph *graph, TF_Status *status) {
+void import_graph() {
     // Read graph from file
     TF_Buffer *graph_def = read_file(GRAPH_NAME);
 
@@ -51,6 +58,7 @@ void import_graph(TF_Graph *graph, TF_Status *status) {
         return;
     }
 
+    // Deallocation of tensorflow object previously allocated
     TF_DeleteImportGraphDefOptions(opts);
     TF_DeleteBuffer(graph_def);
 }
@@ -73,27 +81,30 @@ void resize_and_convert(float data[FIXED_S][FIXED_S][CHANNELS]) {
     /* Scan the bitmap row by row, column by column and get pixel color */
     for (row = 0; row < str_img->h; ++row)
         for (col = 0; col < str_img->w; ++col) {
-            /* Gets the 16-bit pixel color of the stretched image in the given
+            /* Gets the 15-bit pixel color of the stretched image in the given
              * location */
-            color = _getpixel16(str_img, col, row);
+            color = _getpixel15(str_img, col, row);
 
             /* Extracts the red, green and blue component from color and
              * normalize it from 0 to 1 */
-            data[row][col][0] = (float)getr16(color) / MAX_CC;
-            data[row][col][1] = (float)getg16(color) / MAX_CC;
-            data[row][col][2] = (float)getb16(color) / MAX_CC;
+            data[row][col][0] = (float)getr15(color) / MAX_CC;
+            data[row][col][1] = (float)getg15(color) / MAX_CC;
+            data[row][col][2] = (float)getb15(color) / MAX_CC;
         }
 
+    // Destroy the bitmap previously allocated
     destroy_bitmap(str_img);
     release_screen();
 }
 
-/* Inizialization of input tensor with resized image */
+/* Initialization of input tensor with resized image */
 TF_Tensor *tf_init_input() {
+    TF_Tensor *input_tensor; // Tensor containing input image
+
     // Third order tensor that contains the resized bitmap
     float data[FIXED_S][FIXED_S][CHANNELS];
 
-    // Number of bytes of input
+    // Number of bytes for input
     const unsigned int nb_in = ARRAY_SIZE * sizeof(float);
 
     // Input dimensions
@@ -103,16 +114,16 @@ TF_Tensor *tf_init_input() {
     // Resizing and converting image as tensorflow model wants
     resize_and_convert(data);
 
-    // Tensor that represents the image
-    TF_Tensor *input_tensor = TF_NewTensor(TF_FLOAT, in_dims, n_in_dims, data,
-                                           nb_in, &deallocator, 0);
+    // Creation the input tensor used by tensorflow session
+    input_tensor = TF_NewTensor(TF_FLOAT, in_dims, n_in_dims, data, nb_in,
+                                &deallocator, 0);
 
     return input_tensor;
 }
 
-/* Inizialization tensor that contains the results */
-TF_Tensor *tf_init_output() {
-    // Number of bytes of output
+/* Initialization tensor that contains the results */
+void tf_init_output() {
+    // Number of bytes for output
     const int nb_out = N_LAB * sizeof(float);
 
     // Output dimensions
@@ -120,30 +131,25 @@ TF_Tensor *tf_init_output() {
     int n_out_dims = sizeof(out_dims) / sizeof(int64_t);
 
     // Tensor that contains the results given by neural network
-    TF_Tensor *out_vals =
-        TF_AllocateTensor(TF_FLOAT, out_dims, n_out_dims, nb_out);
-
-    return out_vals;
+    out_vals = TF_AllocateTensor(TF_FLOAT, out_dims, n_out_dims, nb_out);
 }
 
-void run_session(TF_Session *session, TF_Graph *graph, TF_Status *status,
-                 TF_Tensor *out_vals) {
-
-    TF_Output input_op = {TF_GraphOperationByName(graph, IN_NAME), 0};
+/* Calculate the result having as input the current image */
+void run_session() {
+    // Create input tensor
     TF_Tensor *input_tensor = tf_init_input();
-
-    TF_Output output = {TF_GraphOperationByName(graph, OUT_NAME), 0};
 
     // Run the graph associated with the session
     TF_SessionRun(session,
                   NULL,                        // Run options
                   &input_op, &input_tensor, 1, // in: tensor, values, number
-                  &output, &out_vals, 1,       // out: tensor, vlaues, number
+                  &output, &out_vals, 1,       // out: tensor, values, number
                   NULL, 0,                     // target operation, num targets
                   NULL,                        // metadata
                   status                       // outputs status
     );
 
+    // Check status of operation and set the results
     if (TF_GetCode(status) == TF_OK) {
         pthread_mutex_lock(&mutex_res);
         result = TF_TensorData(out_vals);
@@ -151,71 +157,70 @@ void run_session(TF_Session *session, TF_Graph *graph, TF_Status *status,
     } else
         fprintf(stderr, "%s\n", TF_Message(status));
 
+    // Delete the input tensor not more necessary
     TF_DeleteTensor(input_tensor);
 }
 
 /* Clean all stuff allocated by tensorflow before the thread termination */
-void tf_exit(void *args) {
-    TF_CloseSession(((struct args *)args)->session,
-                    ((struct args *)args)->status);
-    TF_DeleteSession(((struct args *)args)->session,
-                     ((struct args *)args)->status);
-    TF_DeleteStatus(((struct args *)args)->status);
-    TF_DeleteSessionOptions(((struct args *)args)->sess_opts);
-    TF_DeleteGraph(((struct args *)args)->graph);
-    TF_DeleteTensor(((struct args *)args)->out_vals);
+void tf_exit() {
+    // Close and delete tensorflow session
+    TF_CloseSession(session, status);
+    TF_DeleteSession(session, status);
 
-    // This printf should be remove in the future
-    printf("Cleaned\n");
+    TF_DeleteSessionOptions(sess_opts); // Destroy session options
+    TF_DeleteStatus(status);   // Delete the object containing the status
+    TF_DeleteGraph(graph);     // Delete the object containing the graph
+    TF_DeleteTensor(out_vals); // Delete the object containing the results
 }
 
-/* Inizialization of all stuff required by tensorflow */
-void tf_init(TF_Graph **graph, TF_Status **status, TF_Session **session,
-             TF_SessionOptions **sess_opts, struct args *arguments,
-             TF_Tensor **out_vals) {
-    *graph = TF_NewGraph();
-    *status = TF_NewStatus();
+/* Initialization of all stuff required by tensorflow */
+void tf_init() {
+    // Allocate session option for the session
+    sess_opts = TF_NewSessionOptions();
+
+    // Tensorflow object refers neural network
+    graph = TF_NewGraph();
+    // Tensorflow object that contains the status of the operations
+    status = TF_NewStatus();
 
     // Import graph from file
-    import_graph(*graph, *status);
+    import_graph();
 
-    // New session with associated graph
-    *sess_opts = TF_NewSessionOptions();
-    *session = TF_NewSession(*graph, *sess_opts, *status);
+    // Initialize the input layer of neural network
+    input_op.oper = TF_GraphOperationByName(graph, IN_NAME);
+    input_op.index = 0;
 
-    // Inizialization of output tensor
-    *out_vals = tf_init_output();
+    // Initialize the output layer of neural network
+    output.oper = TF_GraphOperationByName(graph, OUT_NAME);
+    output.index = 0;
 
-    // Inizialization of struct arguments for future deallocation
-    arguments->session = *session;
-    arguments->status = *status;
-    arguments->sess_opts = *sess_opts;
-    arguments->graph = *graph;
-    arguments->out_vals = *out_vals;
+    // Create new session associated to the graph
+    session = TF_NewSession(graph, sess_opts, status);
+
+    // Initialization of output tensor
+    tf_init_output();
 }
 
-void *neural_network_task(void *period) {
-    struct timespec t;
-    struct args arguments;    // Arguments for deallocation tensorflow stuff
-    TF_Graph *graph = NULL;   // Graph associated to session
-    TF_Status *status = NULL; // Result status of tensorflow execution
-    TF_SessionOptions *sess_opts = NULL; // Tensorflow session options
-    TF_Session *sess = NULL;             //
-    TF_Tensor *out_vals = NULL; // Tensor that contains results of execution
+void *neural_network_task() {
+    struct timespec t;  // Time refering the period
+    struct timespec dl; // Time refering the deadline
 
-    tf_init(&graph, &status, &sess, &sess_opts, &arguments, &out_vals);
+    // Initialization of tensorflow and object needed by it
+    tf_init();
 
-    // Not needed i guess, but still remain here for a while
+    // Set cancel mode as asynchronous
     // pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 
     // Push the routine that is executed after receiving cancellation request
-    pthread_cleanup_push(&tf_exit, &arguments);
+    pthread_cleanup_push(&tf_exit, NULL);
 
-    set_activation(&t, *(int *)period);
+    set_activation(&t, task_table[NN_I].period);
+    set_activation(&dl, task_table[NN_I].period);
 
     while (1) {
-        run_session(sess, graph, status, out_vals);
-        wait_for_activation(&t, *(int *)period);
+        run_session();
+        check_deadline(&dl, NN_I);
+        wait_for_activation(&t, &dl, task_table[NN_I].period);
     }
 
     pthread_cleanup_pop(1);
