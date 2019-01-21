@@ -13,7 +13,19 @@
 
 \begin{document}
 
-\maketitle
+\begin{titlepage}
+    \centering
+	\Huge Artificial Nose\par
+	\vspace{1cm}
+	\Large Real-Time Systems, Embedded Computing Systems\par
+	\vspace{1.5cm}
+    \Large Luca Belluardo e Andrea Stevanato\par
+    \vspace{1cm}
+    \large a.stevanato.1995@gmail.com, luca.bellu95@gmail.com\par
+    \large 
+	\vfill
+	{\large \today\par}
+\end{titlepage}
 
 \section{Introduction}
 In this project a real-time application is developed to recognize smells from an
@@ -161,7 +173,7 @@ neural network was trained and the values are the neural network output.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.60]{images/results.png}
+    \includegraphics[width=\textwidth]{images/results.png}
     \caption{Result}
     \label{results}
 \end{figure}
@@ -171,7 +183,7 @@ This area shows the current values (Figure \ref{values}) sampled from the sensor
 
 \begin{figure}[H]
     \centering
-    \includegraphics[scale=0.75]{images/values.png}
+    \includegraphics[width=\textwidth]{images/values.png}
     \caption{Current values}
     \label{values}
 \end{figure}
@@ -347,9 +359,9 @@ library for dataflow programming across a range of tasks.
 
 For training the neural network was used a python script
 \href{https://www.tensorflow.org/hub/tutorials/image\_retraining}{retrain}
-provided by Tensorflow. In this file a lot of configurations are possible. In
-our application we use the default configurations and choose only the number
-of training steps.
+provided by Tensorflow. The retrain script use the Inception V3 architecture.
+In this file a lot of configurations are possible. In our application we use
+the default configurations and choose only the number of training steps.
 
 The output of the retrain script is saved into a file that we have called
 \texttt{graph.pb}. When the neural network task is activated, it loads this
@@ -358,6 +370,18 @@ image is divided into three elements, one for each color: red, green and
 blue; the value of each color for each pixel is stored into a third order
 tensor, which is the input for the neural network.
 
-\section{Conclusions}
+\section{Conclusion}
+
+The first experiment was made with wine, vinegar, ethyl alcohol and perfume.
+Using this smells the sensor goes into saturation and it is not able to
+discriminate between the smells. The same results was achieved increasing the
+distance between the smells and the sensor without no positive results.
+
+After the first experiment the neural network was trained for recognizing
+smells of coffee and orange. This two smells was chosen due to their limited
+CO2 and tVOC values. However, in our opinion, the sensor used for the
+application is not able to discriminate between this two smells. Hence the
+neural network can't produce the hoped results using the images created
+starting from both values: CO2 and tVOC.
 
 \end{document}
