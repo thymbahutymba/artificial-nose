@@ -35,6 +35,25 @@ the neural network the Tensorflow framework was used.
 The smells for which the neural network has been trained are: orange, coffee
 and mustard. The final test accuracy of the neural network is about $93\%$.
 
+\section{Instructions}
+In order to test the application it's necessary to download from
+\href{https://drive.google.com/open?id=1qDOYy3bR72UthGocy0de_JqHhydha3PY}{here}
+the file containing the neural network. This file have to be placed inside
+the main folder that contains the project. Moreover to execute the
+application is required a working installation of
+\href{https://www.tensorflow.org/install/lang_c}{Tensorflow for C}.
+
+In order to read the sensor is necessary to connect the arduino with the
+sensor to an USB port. In virtualbox the default path to the device which
+represents the sensor is \texttt{/dev/ttyACM0}. In case the default path is
+different, it's necessary to change the define \texttt{SERIAL\_PORT} in file
+\texttt{include/sensor.h}.
+
+Once Tensorflow has been installed, the neural network has been downloaded
+and, if necessary, the path to arduino changed, the application can be
+compiled with the \texttt{make} command. With the command \texttt{sudo
+./main} the application is started.
+
 \section{The tasks}
 In our application we have 5 periodic tasks (Figure \ref{tdiagram}): graphic
 task, sensor task, neural network task (made with Tensorflow), keyboard task
@@ -101,7 +120,7 @@ keyboard input.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{images/interface.png}
+    \includegraphics[width=0.65\textwidth]{images/interface.png}
     \caption{Interface of application}
     \label{interface}
 \end{figure}
